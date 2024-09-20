@@ -94,15 +94,23 @@ jobs:
           CIBW_PROJECT_REQUIRES_PYTHON: "~=${{ matrix.python-version }}.0"
           PKG_CONFIG_PATH: "C:/msys64/mingw64/lib/pkgconfig"
           PKG_CONFIG_EXECUTABLE: "C:/msys64/usr/bin/pkg-config.exe"
-          CMAKE_PREFIX_PATH: "C:/msys64/mingw64;C:/windows-libs/external-libs"
-          CMAKE_LIBRARY_PATH: "C:/msys64/mingw64/lib;C:/windows-libs/external-libs/lib-mingw64"
-          CMAKE_INCLUDE_PATH: "C:/msys64/mingw64/include;C:/windows-libs/external-libs/include"
+          CMAKE_PREFIX_PATH: "C:/msys64/mingw64"
+          CMAKE_LIBRARY_PATH: "C:/msys64/mingw64/lib"
+          CMAKE_INCLUDE_PATH: "C:/msys64/mingw64/include"
           CMAKE_GENERATOR: "MSYS Makefiles"
           BUILD_THREADS: 1
           ASM_NASM: "C:/nasm/nasm.exe"
         shell: pwsh
         run: |
           Remove-Item -Recurse -Force "C:\Strawberry\"
+          $env:CMAKE_ARGS = "-DZLIB_LIBRARY=C:/msys64/mingw64/lib/libz.a `
+          -DZLIB_INCLUDE_DIR=C:/msys64/mingw64/include `
+          -DBZIP2_LIBRARIES=C:/msys64/mingw64/lib/libbz2.a `
+          -DBZIP2_INCLUDE_DIR=C:/msys64/mingw64/include `
+          -DREADLINE_LIBRARY=C:/msys64/mingw64/lib/libreadline.a `
+          -DREADLINE_INCLUDE_DIR=C:/msys64/mingw64/include `
+          -DEDITLINE_LIBRARY=C:/msys64/mingw64/lib/libeditline.a `
+          -DEDITLINE_INCLUDE_DIR=C:/msys64/mingw64/include"
           poetry install --no-interaction --no-root --only=build
           poetry run python -m cibuildwheel --output-dir .\wheelhouse
           Get-ChildItem -Path .\wheelhouse -Filter *.whl | Format-List
