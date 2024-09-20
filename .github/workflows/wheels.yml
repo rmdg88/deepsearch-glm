@@ -102,6 +102,7 @@ jobs:
           ASM_NASM: "C:/nasm/nasm.exe"
           PATH: "C:/msys64/usr/bin;C:/msys64/mingw64/bin;${{env.PATH}}"
         shell: pwsh
+        run: |
           Remove-Item -Recurse -Force "C:\Strawberry\"
           poetry install --no-interaction --no-root --only=build
           poetry run python -m cibuildwheel --output-dir .\wheelhouse
