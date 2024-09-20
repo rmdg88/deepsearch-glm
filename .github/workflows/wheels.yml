@@ -67,7 +67,7 @@ jobs:
             mingw-w64-x86_64-readline
             mingw-w64-x86_64-wineditline
             mingw-w64-x86_64-zlib
-            pacman -S pkg-config
+            pkg-config
 
       # - name: Set up QPDF external-libs [windows]
       #   if: ${{matrix.os.platform_id == 'win_amd64'}}
