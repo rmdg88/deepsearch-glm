@@ -63,15 +63,10 @@ jobs:
           update: true
           install: >
             mingw-w64-x86_64-toolchain 
-            mingw-w64-i686-toolchain
             mingw-w64-x86_64-bzip2
-            mingw-w64-i686-bzip2
             mingw-w64-x86_64-readline
-            mingw-w64-i686-readline
             mingw-w64-x86_64-editline
-            mingw-w64-i686-editline
             mingw-w64-x86_64-zlib
-            mingw-w64-i686-zlib
 
       # - name: Set up QPDF external-libs [windows]
       #   if: ${{matrix.os.platform_id == 'win_amd64'}}
