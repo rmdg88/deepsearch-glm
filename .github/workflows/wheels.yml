@@ -86,7 +86,7 @@ jobs:
           nasm -v
 
       - name: Build wheels
-        if: ${{matrix.os.platform_id == 'win_amd64'}}
+        if: ${{ matrix.os.platform_id == 'win_amd64' }}
         env:
           CIBW_PLATFORM: windows
           CIBW_BUILD_VERBOSITY: 3
@@ -103,19 +103,49 @@ jobs:
           PATH: "C:/msys64/usr/bin;C:/msys64/mingw64/bin;${{env.PATH}}"
         shell: pwsh
         run: |
-          Remove-Item -Recurse -Force "C:\Strawberry\"
+          # Remove Strawberry Perl directory
+          Remove-Item -Recurse -Force "C:\Strawberry\" -ErrorAction Ignore
+          
+          # Set CMAKE_ARGS using pkg-config paths discovered via MSYS2
+          $zlib_lib = & pkg-config --libs zlib
+          $zlib_include = & pkg-config --cflags zlib
+
+          $bzip2_lib = & pkg-config --libs bzip2
+          $bzip2_include = & pkg-config --cflags bzip2
+
+          $readline_lib = & pkg-config --libs readline
+          $readline_include = & pkg-config --cflags readline
+
+          $env:CMAKE_ARGS = "-DZLIB_LIBRARY=$zlib_lib `
+          -DZLIB_INCLUDE_DIR=$zlib_include `
+          -DBZIP2_LIBRARIES=$bzip2_lib `
+          -DBZIP2_INCLUDE_DIR=$bzip2_include `
+          -DREADLINE_LIBRARY=$readline_lib `
+          -DREADLINE_INCLUDE_DIR=$readline_include"
+          
+          # Install build dependencies with Poetry
           poetry install --no-interaction --no-root --only=build
+          
+          # Build the wheels using cibuildwheel
           poetry run python -m cibuildwheel --output-dir .\wheelhouse
+          
+          # List the built wheels
           Get-ChildItem -Path .\wheelhouse -Filter *.whl | Format-List
+          
+          # Inspect the wheel files
           Get-ChildItem -Path .\wheelhouse -Filter *.whl | ForEach-Object {
               $file = $_.FullName
               Write-Output "Inspecting $file"
               poetry run python -m zipfile --list "$file"
           }
+          
+          # Create the 'dist' directory if it doesn't exist
           if (-not (Test-Path -Path .\dist)) {
               New-Item -Path .\dist -ItemType Directory
           }
-          Copy-Item -Path .\wheelhouse\*.whl -Destination .\dist\
+          
+          # Copy wheel files to 'dist' directory
+          Copy-Item -Path .\wheelhouse\*.whl -Destination .\dist
 
       - name: publish wheels (dry run)
         run: |
