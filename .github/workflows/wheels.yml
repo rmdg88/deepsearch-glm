@@ -6,40 +6,18 @@ env:
 
 jobs:
   build_wheels:
-    name: Build wheel for py${{ matrix.python-version }} ${{ matrix.os.platform_id }} ${{ matrix.os.macos_version }}
+    name: Build wheel for py${{ matrix.python-version }} ${{ matrix.os.platform_id }}
     runs-on: ${{ matrix.os.name }}
 
     strategy:
-      # Ensure that a wheel builder finishes even if another fails
-      # list of github vm: https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners/about-github-hosted-runners#standard-github-hosted-runners-for-public-repositories
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.12"]
 
         os:
-          - name: "ubuntu-latest"
-            platform: "linux"
-            platform_id: "manylinux_x86_64"
-
-          - name: "macos-13"
-            platform: "macos"
-            macos_version: "13"
-            platform_id: "macosx_x86_64"
-
-          - name: "macos-13"
-            platform: "macos"
-            macos_version: "13"
-            platform_id: "macosx_arm64"
-
-          - name: "macos-14"
-            platform: "macos"
-            macos_version: "14"
-            platform_id: "macosx_x86_64"
-
-          - name: "macos-14"
-            platform: "macos"
-            macos_version: "14"
-            platform_id: "macosx_arm64"
+          - name: "windows-latest"
+            platform: "windows"
+            platform_id: "win_amd64"   
 
     steps:
       - name: Checkout
@@ -50,13 +28,20 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install poetry
-        run: pipx install poetry==1.8.3 --python $(which python3)
-        shell: bash
-  
-      - name: Test poetry
+      - name: Install Poetry
+        run: python -m pip install poetry==1.8.3
+
+      - name: Set up custom PATH and set py version to cpXYZ [windows]
+        if: ${{matrix.os.platform_id == 'win_amd64'}}
+        shell: pwsh
         run: |
-          poetry run python --version
+          echo "C:\msys64\usr\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo "C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo "C:\Users\runneradmin\.local\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo "C:\nasm" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          $version = "${{ matrix.python-version }}"
+          $cp_version = "cp$($version -replace '\.', '')"
+          Add-Content -Path $env:GITHUB_ENV -Value "python_cp_version=$cp_version"
 
       - name: Setup pypi for poetry [for releases only]
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
@@ -65,143 +50,74 @@ jobs:
           poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
 
       - name: Convert python version to cpXYZ
+        if: ${{matrix.os.platform_id != 'win_amd64'}}
         run: |
           version=${{ matrix.python-version }}
           cp_version="cp${version//.}"
           echo "python_cp_version=$cp_version" >> $GITHUB_ENV
 
-      - name: Build wheels [macos-x86_64]
-        if: ${{matrix.os.platform_id == 'macosx_x86_64'}}
-        env:
-          CIBW_BUILD: ${{ env.python_cp_version }}-${{ matrix.os.platform_id }}
-          CIBW_ARCHS: x86_64
-          CIBW_ARCHS_MACOS: x86_64
-          CIBW_PLATFORM: macos
-          CIBW_SKIP: "pp* *-musllinux_* *_i686* *_s390* *arm64* *pypy*"
-          CIBW_PROJECT_REQUIRES_PYTHON: "~=${{ matrix.python-version }}.0"
-          CIBW_BUILD_VERBOSITY: 3
-          CMAKE_OSX_ARCHITECTURES: x86_64
-          CIBW_REPAIR_WHEEL_COMMAND_MACOS: ""  # do not run delocate-wheel before the re-tag
-          CIBW_ENVIRONMENT: "MACOSX_DEPLOYMENT_TARGET=${{ matrix.os.macos_version }}.0"
-          ARCHFLAGS: -arch x86_64
-          BUILD_THREADS: "4"
-        run: |
-          echo "Building wheel ${CIBW_BUILD}"
-          poetry run python --version
-          poetry install --no-root --only=build
-          cat ./pyproject.toml
-          poetry run python -m cibuildwheel --output-dir wheelhouse
-          echo "step 1"
-          ls -l wheelhouse
-          poetry run wheel tags --platform-tag macosx_${{ matrix.os.macos_version }}_0_x86_64 ./wheelhouse/*.whl
-          rm -f ./wheelhouse/*arm64.whl
-          echo "step 2"
-          ls -l wheelhouse
-          poetry run delocate-wheel --require-archs x86_64 -v ./wheelhouse/*.whl
-          echo "step 3"
-          ls -l wheelhouse
-          for file in ./wheelhouse/*.whl; do
-            echo "Inspecting $file"
-            poetry run python -m zipfile --list "$file"
-          done
-          mkdir ./dist
-          cp wheelhouse/*.whl ./dist/
-
-      # there is an error with the tagging of wheels for macosx-arm64
-      # see note: https://cibuildwheel.readthedocs.io/en/stable/faq/
-      # see here: https://gist.github.com/anderssonjohan/49f07e33fc5cb2420515a8ac76dc0c95#file-build-pendulum-wheels-yml-L39-L53
-      - name: Build wheels [macos-arm64]
-        if: ${{matrix.os.platform_id == 'macosx_arm64'}}
-        env:
-          CIBW_BUILD: ${{ env.python_cp_version }}-${{ matrix.os.platform_id }}
-          CIBW_ARCHS: arm64
-          CIBW_ARCHS_MACOS: arm64
-          CIBW_PLATFORM: macos
-          CIBW_SKIP: "pp* *-musllinux_* *_i686* *x86_64* *_s390* *pypy*"
-          CIBW_PROJECT_REQUIRES_PYTHON: "~=${{ matrix.python-version }}.0"
-          CIBW_BUILD_VERBOSITY: 3
-          CMAKE_OSX_ARCHITECTURES: arm64
-          CIBW_REPAIR_WHEEL_COMMAND_MACOS: ""  # do not run delocate-wheel before the re-tag
-          CIBW_ENVIRONMENT: "MACOSX_DEPLOYMENT_TARGET=${{ matrix.os.macos_version }}.0"
-          ARCHFLAGS: -arch arm64
-          BUILD_THREADS: "4"
-        run: |
-          echo "Building wheel ${CIBW_BUILD}"
-          poetry run python --version
-          poetry install --no-root --only=build
-          cat ./pyproject.toml
-          poetry run python -m cibuildwheel --output-dir wheelhouse
-          echo "step 1"
-          ls -l wheelhouse
-          poetry run wheel tags --platform-tag macosx_${{ matrix.os.macos_version }}_0_arm64 ./wheelhouse/*.whl
-          rm -f ./wheelhouse/*x86_64.whl
-          echo "step 2"
-          ls -l wheelhouse
-          poetry run delocate-wheel --require-archs arm64 -v ./wheelhouse/*.whl
-          echo "step 3"
-          ls -l wheelhouse
-          for file in ./wheelhouse/*.whl; do
-            echo "Inspecting $file"
-            poetry run python -m zipfile --list "$file"
-          done
-          mkdir ./dist
-          cp wheelhouse/*.whl ./dist/
-
-      - name: publish wheels (dry run) [macos]
-        if: matrix.os.platform == 'macos'
-        run: |
-          ls -l ./
-          ls -l ./dist
-          poetry publish --dry-run --no-interaction -vvv
-
-      - name: publish wheels (on publishing) [macos]
-        if: ${{ matrix.os.platform == 'macos' && startsWith(github.ref, 'refs/tags/') }}
-        run: |
-          ls -l ./
-          ls -l ./dist
-          poetry publish --no-interaction -vvv
-
-      - name: Set up QEMU [linux]
-        if: matrix.os.name == 'ubuntu-latest'
-        uses: docker/setup-qemu-action@v3
+      - name: Set up MSYS2 [windows]
+        if: ${{matrix.os.platform_id == 'win_amd64'}}
+        uses: msys2/setup-msys2@v2
         with:
-            platforms: all
+          update: true
+          install: >
+            mingw-w64-x86_64-toolchain 
+            mingw-w64-i686-toolchain
+            
+      - name: Set up QPDF external-libs [windows]
+        if: ${{matrix.os.platform_id == 'win_amd64'}}
+        shell: pwsh
+        run: |
+          New-Item -Path 'C:\windows-libs' -ItemType Directory -Force
+          Invoke-WebRequest -Uri 'https://github.com/qpdf/external-libs/releases/download/release-2024-06-07/qpdf-external-libs-bin.zip' -OutFile 'C:\windows-libs\qpdf-external-libs-bin.zip'
+          Expand-Archive -Path 'C:\windows-libs\qpdf-external-libs-bin.zip' -DestinationPath 'C:\windows-libs' -Force
+          Get-ChildItem -Path 'C:\windows-libs' -Recurse
+          
+      - name: Set up NASM assembler [windows]
+        if: ${{matrix.os.platform_id == 'win_amd64'}}
+        shell: pwsh
+        run: |
+          New-Item -Path 'C:\nasm' -ItemType Directory -Force
+          Invoke-WebRequest -Uri 'https://fossies.org/windows/misc/nasm-2.16.03-win64.zip/nasm-2.16.03/nasm.exe' -OutFile 'C:\nasm\nasm.exe'
+          nasm -v
 
-      - name: Build wheels [linux]
-        if: matrix.os.name == 'ubuntu-latest'
+      - name: Build wheels
+        if: ${{matrix.os.platform_id == 'win_amd64'}}
         env:
-          # CIBW_BUILD: ${{ env.python_cp_version }}-${{ matrix.os.platform_id }}
-          CIBW_ARCHS: auto x86_64 aarch64
-          CIBW_PLATFORM: linux
-          CIBW_SKIP: "pp* *musllinux_* *_i686* *_s390* *pypy*"
-          CIBW_PROJECT_REQUIRES_PYTHON: "~=${{ matrix.python-version }}.0"
+          CIBW_PLATFORM: windows
           CIBW_BUILD_VERBOSITY: 3
-          BUILD_THREADS: "8"
+          CIBW_ARCHS: AMD64
+          CIBW_PROJECT_REQUIRES_PYTHON: "~=${{ matrix.python-version }}.0"
+          PKG_CONFIG_PATH: "C:/msys64/mingw64/lib/pkgconfig"
+          PKG_CONFIG_EXECUTABLE: "C:/msys64/usr/bin/pkg-config.exe"
+          CMAKE_PREFIX_PATH: "C:/msys64/mingw64;C:/windows-libs/external-libs"
+          CMAKE_LIBRARY_PATH: "C:/msys64/mingw64/lib;C:/windows-libs/external-libs/lib-mingw64"
+          CMAKE_INCLUDE_PATH: "C:/msys64/mingw64/include;C:/windows-libs/external-libs/include"
+          CMAKE_GENERATOR: "MSYS Makefiles"
+          BUILD_THREADS: 1
+          ASM_NASM: "C:/nasm/nasm.exe"
+        shell: pwsh
         run: |
-          echo "Building wheel ${CIBW_BUILD}"
-          poetry run python --version
-          poetry install --no-root --only=build
-          cat ./pyproject.toml
-          poetry run python -m cibuildwheel --output-dir ./wheelhouse
-          ls -l ./wheelhouse
-          for file in ./wheelhouse/*.whl; do
-            echo "Inspecting $file"
-            poetry run python -m zipfile --list "$file"
-          done
-          mkdir ./dist
-          cp wheelhouse/*.whl ./dist/
+          Remove-Item -Recurse -Force "C:\Strawberry\"
+          poetry install --no-interaction --no-root --only=build
+          poetry run python -m cibuildwheel --output-dir .\wheelhouse
+          Get-ChildItem -Path .\wheelhouse -Filter *.whl | Format-List
+          Get-ChildItem -Path .\wheelhouse -Filter *.whl | ForEach-Object {
+              $file = $_.FullName
+              Write-Output "Inspecting $file"
+              poetry run python -m zipfile --list "$file"
+          }
+          if (-not (Test-Path -Path .\dist)) {
+              New-Item -Path .\dist -ItemType Directory
+          }
+          Copy-Item -Path .\wheelhouse\*.whl -Destination .\dist\
 
-      - name: publish wheels (dry run) [linux]
-        if: matrix.os.platform == 'linux'
+      - name: publish wheels (dry run)
         run: |
-          ls -l ./
-          ls -l ./dist
           poetry publish --dry-run --no-interaction -vvv
 
-      - name: publish wheels (on publishing) [linux]
-        if: ${{ matrix.os.platform == 'linux' && startsWith(github.ref, 'refs/tags/') }}
+      - name: publish wheels (on publishing) [for releases only]
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
         run: |
-          ls -l ./
-          ls -l ./dist
           poetry publish --no-interaction -vvv
-

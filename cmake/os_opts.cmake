@@ -4,6 +4,7 @@ message(STATUS "entering in 'os_opts.cmake'")
 
 if(WIN32)
    message(STATUS "compiling on windows")
+   set(LIB_LINK fmt json loguru cxxopts pcre2 sentencepiece sentencepiece_train fasttext utf8 z)
 
 elseif(APPLE)
    message(STATUS "compiling on mac-osx")
@@ -34,5 +35,3 @@ elseif(UNIX)
    list(APPEND LIB_LINK dl m pthread rt resolv)
 
 endif()
-
-
