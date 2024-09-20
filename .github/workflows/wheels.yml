@@ -67,6 +67,7 @@ jobs:
             mingw-w64-x86_64-readline
             mingw-w64-x86_64-wineditline
             mingw-w64-x86_64-zlib
+            pacman -S pkg-config
 
       # - name: Set up QPDF external-libs [windows]
       #   if: ${{matrix.os.platform_id == 'win_amd64'}}
@@ -100,21 +101,21 @@ jobs:
           CMAKE_GENERATOR: "MSYS Makefiles"
           BUILD_THREADS: 1
           ASM_NASM: "C:/nasm/nasm.exe"
-          PATH: "C:/msys64/usr/bin;C:/msys64/mingw64/bin;${{env.PATH}}"
+          PATH: "C:/msys64/usr/bin;C:/msys64/mingw64/bin;${{env.PATH}}"  # Add MSYS2 to PATH
         shell: pwsh
         run: |
           # Remove Strawberry Perl directory
           Remove-Item -Recurse -Force "C:\Strawberry\" -ErrorAction Ignore
           
-          # Set CMAKE_ARGS using pkg-config paths discovered via MSYS2
-          $zlib_lib = & pkg-config --libs zlib
-          $zlib_include = & pkg-config --cflags zlib
+          # Set CMAKE_ARGS using pkg-config with the full path to pkg-config.exe
+          $zlib_lib = & "C:/msys64/usr/bin/pkg-config.exe" --libs zlib
+          $zlib_include = & "C:/msys64/usr/bin/pkg-config.exe" --cflags zlib
 
-          $bzip2_lib = & pkg-config --libs bzip2
-          $bzip2_include = & pkg-config --cflags bzip2
+          $bzip2_lib = & "C:/msys64/usr/bin/pkg-config.exe" --libs bzip2
+          $bzip2_include = & "C:/msys64/usr/bin/pkg-config.exe" --cflags bzip2
 
-          $readline_lib = & pkg-config --libs readline
-          $readline_include = & pkg-config --cflags readline
+          $readline_lib = & "C:/msys64/usr/bin/pkg-config.exe" --libs readline
+          $readline_include = & "C:/msys64/usr/bin/pkg-config.exe" --cflags readline
 
           $env:CMAKE_ARGS = "-DZLIB_LIBRARY=$zlib_lib `
           -DZLIB_INCLUDE_DIR=$zlib_include `
@@ -146,6 +147,7 @@ jobs:
           
           # Copy wheel files to 'dist' directory
           Copy-Item -Path .\wheelhouse\*.whl -Destination .\dist
+
 
       - name: publish wheels (dry run)
         run: |
