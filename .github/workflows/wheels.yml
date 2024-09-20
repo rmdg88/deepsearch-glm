@@ -65,7 +65,7 @@ jobs:
             mingw-w64-x86_64-toolchain 
             mingw-w64-x86_64-bzip2
             mingw-w64-x86_64-readline
-            mingw-w64-x86_64-editline
+            mingw-w64-x86_64-wineditline
             mingw-w64-x86_64-zlib
 
       # - name: Set up QPDF external-libs [windows]
