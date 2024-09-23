@@ -62,23 +62,22 @@ jobs:
           update: true
           install: >
             mingw-w64-x86_64-toolchain 
-            mingw-w64-i686-toolchain
             mingw-w64-x86_64-gcc
             mingw-w64-x86_64-zlib
             mingw-w64-x86_64-bzip2
 
-      - name: Set up external-libs [windows]
-        if: ${{matrix.os.platform_id == 'win_amd64'}}
-        shell: pwsh
-        run: |
-          Get-ChildItem -Path C:\msys64 -Recurse -Filter *zlib* | Select-Object FullName
-          Get-ChildItem -Path C:\msys64 -Recurse -Filter *bz2* | Select-Object FullName
-          Get-ChildItem -Path C:\mingw64 -Recurse -Filter *zlib* | Select-Object FullName
-          Get-ChildItem -Path C:\mingw64 -Recurse -Filter *bz2* | Select-Object FullName
-          Get-ChildItem -Path C:\msys64 -Filter pkg-config.exe -Recurse | Select-Object FullName
-          Get-ChildItem -Path C:\mingw64 -Filter pkg-config.exe -Recurse | Select-Object FullName
-          Get-ChildItem -Path C:\msys64 -Filter *.pc -Recurse | Select-Object FullName
-          Get-ChildItem -Path C:\mingw64 -Filter *.pc -Recurse | Select-Object FullName
+      # - name: Set up external-libs [windows]
+      #   if: ${{matrix.os.platform_id == 'win_amd64'}}
+      #   shell: pwsh
+      #   run: |
+      #     Get-ChildItem -Path C:\msys64 -Recurse -Filter *zlib* | Select-Object FullName
+      #     Get-ChildItem -Path C:\msys64 -Recurse -Filter *bz2* | Select-Object FullName
+      #     Get-ChildItem -Path C:\mingw64 -Recurse -Filter *zlib* | Select-Object FullName
+      #     Get-ChildItem -Path C:\mingw64 -Recurse -Filter *bz2* | Select-Object FullName
+      #     Get-ChildItem -Path C:\msys64 -Filter pkg-config.exe -Recurse | Select-Object FullName
+      #     Get-ChildItem -Path C:\mingw64 -Filter pkg-config.exe -Recurse | Select-Object FullName
+      #     Get-ChildItem -Path C:\msys64 -Filter *.pc -Recurse | Select-Object FullName
+      #     Get-ChildItem -Path C:\mingw64 -Filter *.pc -Recurse | Select-Object FullName
 
       - name: Set up NASM assembler [windows]
         if: ${{matrix.os.platform_id == 'win_amd64'}}
@@ -95,18 +94,17 @@ jobs:
           CIBW_BUILD_VERBOSITY: 3
           CIBW_ARCHS: AMD64
           CIBW_PROJECT_REQUIRES_PYTHON: "~=${{ matrix.python-version }}.0"
-          PKG_CONFIG_PATH: ""
-          PKG_CONFIG_EXECUTABLE: ""
-          CMAKE_PREFIX_PATH: "C:/msys64/mingw64"
-          CMAKE_LIBRARY_PATH: "C:/msys64/mingw64/lib"
-          CMAKE_INCLUDE_PATH: "C:/msys64/mingw64/include"
+          PKG_CONFIG_PATH: "C:/mingw64/lib/pkgconfig"
+          PKG_CONFIG_EXECUTABLE: "C:/msys64/mingw64/bin/pkg-config"
+          CMAKE_PREFIX_PATH: "C:/mingw64"
+          CMAKE_LIBRARY_PATH: "C:/mingw64/lib"
+          CMAKE_INCLUDE_PATH: "C:/mingw64/include"
           CMAKE_GENERATOR: "MSYS Makefiles"
           BUILD_THREADS: 1
           ASM_NASM: "C:/nasm/nasm.exe"
         shell: pwsh
         run: |
           Remove-Item -Recurse -Force "C:\Strawberry\"
-          $env:CMAKE_ARGS = "-DBZIP2_INCLUDE_DIR=C:/mingw64/include -DBZIP2_LIBRARIES=C:/mingw64/lib/libbz2.a -DZLIB_INCLUDE_DIR=C:/mingw64/include -DZLIB_LIBRARY=C:/mingw64/lib/libz.a"
           poetry install --no-interaction --no-root --only=build
           poetry run python -m cibuildwheel --output-dir .\wheelhouse
           Get-ChildItem -Path .\wheelhouse -Filter *.whl | Format-List
