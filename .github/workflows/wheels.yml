@@ -56,27 +56,22 @@ jobs:
           cp_version="cp${version//.}"
           echo "python_cp_version=$cp_version" >> $GITHUB_ENV
 
-      - name: Set up MSYS2 [windows]
-        if: ${{matrix.os.platform_id == 'win_amd64'}}
+      - name: Set up MSYS2
         uses: msys2/setup-msys2@v2
         with:
           update: true
           install: >
             mingw-w64-x86_64-toolchain 
-            mingw-w64-x86_64-bzip2
-            mingw-w64-x86_64-readline
-            mingw-w64-x86_64-wineditline
-            mingw-w64-x86_64-zlib
-            pkg-config
+            mingw-w64-i686-toolchain
 
-      # - name: Set up QPDF external-libs [windows]
-      #   if: ${{matrix.os.platform_id == 'win_amd64'}}
-      #   shell: pwsh
-      #   run: |
-      #     New-Item -Path 'C:\windows-libs' -ItemType Directory -Force
-      #     Invoke-WebRequest -Uri 'https://github.com/qpdf/external-libs/releases/download/release-2024-06-07/qpdf-external-libs-bin.zip' -OutFile 'C:\windows-libs\qpdf-external-libs-bin.zip'
-      #     Expand-Archive -Path 'C:\windows-libs\qpdf-external-libs-bin.zip' -DestinationPath 'C:\windows-libs' -Force
-      #     Get-ChildItem -Path 'C:\windows-libs' -Recurse
+      - name: Set up QPDF external-libs [windows]
+        if: ${{matrix.os.platform_id == 'win_amd64'}}
+        shell: pwsh
+        run: |
+          New-Item -Path 'C:\windows-libs' -ItemType Directory -Force
+          Invoke-WebRequest -Uri 'https://github.com/qpdf/external-libs/releases/download/release-2024-06-07/qpdf-external-libs-bin.zip' -OutFile 'C:\windows-libs\qpdf-external-libs-bin.zip'
+          Expand-Archive -Path 'C:\windows-libs\qpdf-external-libs-bin.zip' -DestinationPath 'C:\windows-libs' -Force
+          Get-ChildItem -Path 'C:\windows-libs' -Recurse
           
       - name: Set up NASM assembler [windows]
         if: ${{matrix.os.platform_id == 'win_amd64'}}
@@ -87,7 +82,7 @@ jobs:
           nasm -v
 
       - name: Build wheels
-        if: ${{ matrix.os.platform_id == 'win_amd64' }}
+        if: ${{matrix.os.platform_id == 'win_amd64'}}
         env:
           CIBW_PLATFORM: windows
           CIBW_BUILD_VERBOSITY: 3
@@ -95,59 +90,28 @@ jobs:
           CIBW_PROJECT_REQUIRES_PYTHON: "~=${{ matrix.python-version }}.0"
           PKG_CONFIG_PATH: "C:/msys64/mingw64/lib/pkgconfig"
           PKG_CONFIG_EXECUTABLE: "C:/msys64/usr/bin/pkg-config.exe"
-          CMAKE_PREFIX_PATH: "C:/msys64/mingw64"
-          CMAKE_LIBRARY_PATH: "C:/msys64/mingw64/lib"
-          CMAKE_INCLUDE_PATH: "C:/msys64/mingw64/include"
+          CMAKE_PREFIX_PATH: "C:/msys64/mingw64;C:/windows-libs/external-libs"
+          CMAKE_LIBRARY_PATH: "C:/msys64/mingw64/lib;C:/windows-libs/external-libs/lib-mingw64"
+          CMAKE_INCLUDE_PATH: "C:/msys64/mingw64/include;C:/windows-libs/external-libs/include"
           CMAKE_GENERATOR: "MSYS Makefiles"
           BUILD_THREADS: 1
           ASM_NASM: "C:/nasm/nasm.exe"
-          PATH: "C:/msys64/usr/bin;C:/msys64/mingw64/bin;${{env.PATH}}"  # Add MSYS2 to PATH
         shell: pwsh
         run: |
-          # Remove Strawberry Perl directory
-          Remove-Item -Recurse -Force "C:\Strawberry\" -ErrorAction Ignore
-          
-          # Set CMAKE_ARGS using pkg-config with the full path to pkg-config.exe
-          $zlib_lib = & "C:/msys64/usr/bin/pkg-config.exe" --libs zlib
-          $zlib_include = & "C:/msys64/usr/bin/pkg-config.exe" --cflags zlib
-
-          $bzip2_lib = & "C:/msys64/usr/bin/pkg-config.exe" --libs bzip2
-          $bzip2_include = & "C:/msys64/usr/bin/pkg-config.exe" --cflags bzip2
-
-          $readline_lib = & "C:/msys64/usr/bin/pkg-config.exe" --libs readline
-          $readline_include = & "C:/msys64/usr/bin/pkg-config.exe" --cflags readline
-
-          $env:CMAKE_ARGS = "-DZLIB_LIBRARY=$zlib_lib `
-          -DZLIB_INCLUDE_DIR=$zlib_include `
-          -DBZIP2_LIBRARIES=$bzip2_lib `
-          -DBZIP2_INCLUDE_DIR=$bzip2_include `
-          -DREADLINE_LIBRARY=$readline_lib `
-          -DREADLINE_INCLUDE_DIR=$readline_include"
-          
-          # Install build dependencies with Poetry
+          Remove-Item -Recurse -Force "C:\Strawberry\"
+          $env:CMAKE_ARGS = "-DZLIB_LIBRARY=C:/windows-libs/external-libs/lib-mingw64/libz.a -DZLIB_INCLUDE_DIR=C:/windows-libs/external-libs/include -DJPEG_LIBRARY=C:/windows-libs/external-libs/lib-mingw64/libjpeg.a -DJPEG_INCLUDE_DIR=C:/windows-libs/external-libs/include"
           poetry install --no-interaction --no-root --only=build
-          
-          # Build the wheels using cibuildwheel
           poetry run python -m cibuildwheel --output-dir .\wheelhouse
-          
-          # List the built wheels
           Get-ChildItem -Path .\wheelhouse -Filter *.whl | Format-List
-          
-          # Inspect the wheel files
           Get-ChildItem -Path .\wheelhouse -Filter *.whl | ForEach-Object {
               $file = $_.FullName
               Write-Output "Inspecting $file"
               poetry run python -m zipfile --list "$file"
           }
-          
-          # Create the 'dist' directory if it doesn't exist
           if (-not (Test-Path -Path .\dist)) {
               New-Item -Path .\dist -ItemType Directory
           }
-          
-          # Copy wheel files to 'dist' directory
-          Copy-Item -Path .\wheelhouse\*.whl -Destination .\dist
-
+          Copy-Item -Path .\wheelhouse\*.whl -Destination .\dist\
 
       - name: publish wheels (dry run)
         run: |
