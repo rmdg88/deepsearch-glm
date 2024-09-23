@@ -63,7 +63,17 @@ jobs:
           install: >
             mingw-w64-x86_64-toolchain 
             mingw-w64-i686-toolchain
-          
+
+      - name: Set up external-libs [windows]
+        if: ${{matrix.os.platform_id == 'win_amd64'}}
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path C:\windows-libs\external-libs -Force
+          Copy-Item -Path C:\msys64\mingw64\lib\libbz2.a -Destination C:\windows-libs\external-libs
+          Copy-Item -Path C:\msys64\mingw64\lib\libz.a -Destination C:\windows-libs\external-libs
+          Copy-Item -Path C:\msys64\mingw64\include\BZip2 -Destination C:\windows-libs\external-libs -Recurse -Force
+          Copy-Item -Path C:\msys64\mingw64\include\zlib.h -Destination C:\windows-libs\external-libs -Force
+
       - name: Set up NASM assembler [windows]
         if: ${{matrix.os.platform_id == 'win_amd64'}}
         shell: pwsh
@@ -90,7 +100,7 @@ jobs:
         shell: pwsh
         run: |
           Remove-Item -Recurse -Force "C:\Strawberry\"
-          $env:CMAKE_ARGS = "-DBZIP2_INCLUDE_DIR=C:/msys64/mingw64/include -DBZIP2_LIBRARIES=C:/msys64/mingw64/lib/libbz2.a -DZLIB_INCLUDE_DIR=C:/msys64/mingw64/include -DZLIB_LIBRARY=C:/msys64/mingw64/lib/libz.a"
+          $env:CMAKE_ARGS = "-DBZIP2_INCLUDE_DIR=C:/windows-libs/external-libs/BZip2 -DBZIP2_LIBRARIES=C:/windows-libs/external-libs/libbz2.a -DZLIB_INCLUDE_DIR=C:/windows-libs/external-libs -DZLIB_LIBRARY=C:/windows-libs/external-libs/libz.a"
           poetry install --no-interaction --no-root --only=build
           poetry run python -m cibuildwheel --output-dir .\wheelhouse
           Get-ChildItem -Path .\wheelhouse -Filter *.whl | Format-List
