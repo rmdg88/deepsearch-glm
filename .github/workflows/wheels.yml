@@ -64,6 +64,8 @@ jobs:
             mingw-w64-x86_64-toolchain 
             mingw-w64-i686-toolchain
             mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-zlib
+            mingw-w64-x86_64-bzip2
 
       - name: Set up external-libs [windows]
         if: ${{matrix.os.platform_id == 'win_amd64'}}
@@ -100,7 +102,7 @@ jobs:
         shell: pwsh
         run: |
           Remove-Item -Recurse -Force "C:\Strawberry\"
-          $env:CMAKE_ARGS = "-DBZIP2_INCLUDE_DIR=C:/windows-libs/external-libs/BZip2 -DBZIP2_LIBRARIES=C:/windows-libs/external-libs/libbz2.a -DZLIB_INCLUDE_DIR=C:/windows-libs/external-libs -DZLIB_LIBRARY=C:/windows-libs/external-libs/libz.a"
+          $env:CMAKE_ARGS = "-DBZIP2_INCLUDE_DIR=C:/mingw64/opt/include -DBZIP2_LIBRARIES=C:/msys64/usr/bin/msys-bz2-1.dll -DZLIB_INCLUDE_DIR=C:/mingw64/opt/include -DZLIB_LIBRARY=C:/msys64/usr/lib/perl5/core_perl/auto/Compress/Raw/Zlib/Zlib.dll"
           poetry install --no-interaction --no-root --only=build
           poetry run python -m cibuildwheel --output-dir .\wheelhouse
           Get-ChildItem -Path .\wheelhouse -Filter *.whl | Format-List
