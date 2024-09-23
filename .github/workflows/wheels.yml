@@ -69,6 +69,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Path C:\windows-libs\external-libs -Force
+          ls C:\
           Copy-Item -Path C:\msys64\mingw64\lib\libbz2.a -Destination C:\windows-libs\external-libs
           Copy-Item -Path C:\msys64\mingw64\lib\libz.a -Destination C:\windows-libs\external-libs
           Copy-Item -Path C:\msys64\mingw64\include\BZip2 -Destination C:\windows-libs\external-libs -Recurse -Force
