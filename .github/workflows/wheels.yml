@@ -63,15 +63,6 @@ jobs:
           install: >
             mingw-w64-x86_64-toolchain 
             mingw-w64-i686-toolchain
-
-      - name: Set up QPDF external-libs [windows]
-        if: ${{matrix.os.platform_id == 'win_amd64'}}
-        shell: pwsh
-        run: |
-          New-Item -Path 'C:\windows-libs' -ItemType Directory -Force
-          Invoke-WebRequest -Uri 'https://github.com/qpdf/external-libs/releases/download/release-2024-06-07/qpdf-external-libs-bin.zip' -OutFile 'C:\windows-libs\qpdf-external-libs-bin.zip'
-          Expand-Archive -Path 'C:\windows-libs\qpdf-external-libs-bin.zip' -DestinationPath 'C:\windows-libs' -Force
-          Get-ChildItem -Path 'C:\windows-libs' -Recurse
           
       - name: Set up NASM assembler [windows]
         if: ${{matrix.os.platform_id == 'win_amd64'}}
@@ -89,17 +80,16 @@ jobs:
           CIBW_ARCHS: AMD64
           CIBW_PROJECT_REQUIRES_PYTHON: "~=${{ matrix.python-version }}.0"
           PKG_CONFIG_PATH: "C:/msys64/mingw64/lib/pkgconfig"
-          PKG_CONFIG_EXECUTABLE: "C:/msys64/usr/bin/pkg-config.exe"
-          CMAKE_PREFIX_PATH: "C:/msys64/mingw64;C:/windows-libs/external-libs"
-          CMAKE_LIBRARY_PATH: "C:/msys64/mingw64/lib;C:/windows-libs/external-libs/lib-mingw64"
-          CMAKE_INCLUDE_PATH: "C:/msys64/mingw64/include;C:/windows-libs/external-libs/include"
+          PKG_CONFIG_EXECUTABLE: "C:/msys64/mingw64/bin/pkg-config.exe"
+          CMAKE_PREFIX_PATH: "C:/msys64/mingw64"
+          CMAKE_LIBRARY_PATH: "C:/msys64/mingw64/lib"
+          CMAKE_INCLUDE_PATH: "C:/msys64/mingw64/include"
           CMAKE_GENERATOR: "MSYS Makefiles"
           BUILD_THREADS: 1
           ASM_NASM: "C:/nasm/nasm.exe"
         shell: pwsh
         run: |
           Remove-Item -Recurse -Force "C:\Strawberry\"
-          $env:CMAKE_ARGS = "-DZLIB_LIBRARY=C:/windows-libs/external-libs/lib-mingw64/libz.a -DZLIB_INCLUDE_DIR=C:/windows-libs/external-libs/include -DJPEG_LIBRARY=C:/windows-libs/external-libs/lib-mingw64/libjpeg.a -DJPEG_INCLUDE_DIR=C:/windows-libs/external-libs/include"
           poetry install --no-interaction --no-root --only=build
           poetry run python -m cibuildwheel --output-dir .\wheelhouse
           Get-ChildItem -Path .\wheelhouse -Filter *.whl | Format-List
