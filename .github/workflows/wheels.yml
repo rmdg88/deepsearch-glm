@@ -69,13 +69,10 @@ jobs:
         if: ${{matrix.os.platform_id == 'win_amd64'}}
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Path C:\windows-libs\external-libs -Force
-          ls C:\msys64\mingw64\lib
-          ls C:\msys64\mingw64\include
-          Copy-Item -Path C:\msys64\mingw64\lib\libbz2.a -Destination C:\windows-libs\external-libs
-          Copy-Item -Path C:\msys64\mingw64\lib\libz.a -Destination C:\windows-libs\external-libs
-          Copy-Item -Path C:\msys64\mingw64\include\BZip2 -Destination C:\windows-libs\external-libs -Recurse -Force
-          Copy-Item -Path C:\msys64\mingw64\include\zlib.h -Destination C:\windows-libs\external-libs -Force
+          Get-ChildItem -Path C:\msys64 -Recurse -Filter *zlib* | Select-Object FullName
+          Get-ChildItem -Path C:\msys64 -Recurse -Filter *bz2* | Select-Object FullName
+          Get-ChildItem -Path C:\mingw64 -Recurse -Filter *zlib* | Select-Object FullName
+          Get-ChildItem -Path C:\mingw64 -Recurse -Filter *bz2* | Select-Object FullName
 
       - name: Set up NASM assembler [windows]
         if: ${{matrix.os.platform_id == 'win_amd64'}}
