@@ -95,7 +95,7 @@ jobs:
           CIBW_ARCHS: AMD64
           CIBW_PROJECT_REQUIRES_PYTHON: "~=${{ matrix.python-version }}.0"
           PKG_CONFIG_PATH: "C:/mingw64/lib/pkgconfig"
-          PKG_CONFIG_EXECUTABLE: "C:/msys64/mingw64/bin/pkg-config"
+          PKG_CONFIG_EXECUTABLE: "/mingw64/bin/pkg-config.exe"
           CMAKE_PREFIX_PATH: "C:/mingw64"
           CMAKE_LIBRARY_PATH: "C:/mingw64/lib"
           CMAKE_INCLUDE_PATH: "C:/mingw64/include"
