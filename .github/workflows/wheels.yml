@@ -59,8 +59,8 @@ jobs:
       - name: Install zlib and bzip2 via VCPKG
         shell: pwsh
         run: |
-          vcpkg install zlib -d C:\windows\external-libs && \
-          vcpkg install bzip2 -d C:\windows\external-libs
+          vcpkg install zlib:x64-windows-static -d C:\windows\external-libs && \
+          vcpkg install bzip2:x64-windows-static -d C:\windows\external-libs
 
       - name: Set up external-libs [windows]
         if: ${{matrix.os.platform_id == 'win_amd64'}}
