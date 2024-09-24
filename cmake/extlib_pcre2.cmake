@@ -6,7 +6,7 @@ include(ExternalProject)
 include(CMakeParseArguments)
 
 set(PCRE2_URL https://github.com/PCRE2Project/pcre2.git)
-#set(PCRE2_TAG pcre2-10.40)
+#set(PCRE2_TAG pcre2-10.44)
 
 ExternalProject_Add(extlib_pcre2
     PREFIX extlib_pcre2
