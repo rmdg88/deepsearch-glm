@@ -56,12 +56,12 @@ jobs:
           cp_version="cp${version//.}"
           echo "python_cp_version=$cp_version" >> $GITHUB_ENV
 
-      - name: Set up MSYS2
-        uses: msys2/setup-msys2@v2
-        with:
-          update: true
-          install: >
-            mingw-w64-x86_64-toolchain 
+      # - name: Set up MSYS2
+      #   uses: msys2/setup-msys2@v2
+      #   with:
+      #     update: true
+      #     install: >
+      #       mingw-w64-x86_64-toolchain 
 
       - name: Install zlib and bzip2 via VCPKG
         if: ${{matrix.os.platform_id == 'win_amd64'}}
@@ -88,13 +88,13 @@ jobs:
       #     Get-ChildItem -Path C:\msys64 -Filter *.pc -Recurse | Select-Object FullName
       #     Get-ChildItem -Path C:\mingw64 -Filter *.pc -Recurse | Select-Object FullName
 
-      - name: Set up NASM assembler [windows]
-        if: ${{matrix.os.platform_id == 'win_amd64'}}
-        shell: pwsh
-        run: |
-          New-Item -Path 'C:\nasm' -ItemType Directory -Force
-          Invoke-WebRequest -Uri 'https://fossies.org/windows/misc/nasm-2.16.03-win64.zip/nasm-2.16.03/nasm.exe' -OutFile 'C:\nasm\nasm.exe'
-          nasm -v
+      # - name: Set up NASM assembler [windows]
+      #   if: ${{matrix.os.platform_id == 'win_amd64'}}
+      #   shell: pwsh
+      #   run: |
+      #     New-Item -Path 'C:\nasm' -ItemType Directory -Force
+      #     Invoke-WebRequest -Uri 'https://fossies.org/windows/misc/nasm-2.16.03-win64.zip/nasm-2.16.03/nasm.exe' -OutFile 'C:\nasm\nasm.exe'
+      #     nasm -v
 
       - name: Build wheels
         if: ${{matrix.os.platform_id == 'win_amd64'}}
@@ -103,14 +103,14 @@ jobs:
           CIBW_BUILD_VERBOSITY: 3
           CIBW_ARCHS: AMD64
           CIBW_PROJECT_REQUIRES_PYTHON: "~=${{ matrix.python-version }}.0"
-          PKG_CONFIG_PATH: "C:/mingw64/lib/pkgconfig"
-          PKG_CONFIG_EXECUTABLE: "C:/mingw64/bin/pkg-config.exe"
-          CMAKE_PREFIX_PATH: "C:/mingw64"
-          CMAKE_LIBRARY_PATH: "C:/mingw64/lib"
-          CMAKE_INCLUDE_PATH: "C:/mingw64/include"
-          CMAKE_GENERATOR: "MSYS Makefiles"
-          BUILD_THREADS: 1
-          ASM_NASM: "C:/nasm/nasm.exe"
+          # PKG_CONFIG_PATH: "C:/mingw64/lib/pkgconfig"
+          # PKG_CONFIG_EXECUTABLE: "C:/mingw64/bin/pkg-config.exe"
+          # CMAKE_PREFIX_PATH: "C:/mingw64"
+          # CMAKE_LIBRARY_PATH: "C:/mingw64/lib"
+          # CMAKE_INCLUDE_PATH: "C:/mingw64/include"
+          # CMAKE_GENERATOR: "MSYS Makefiles"
+          # BUILD_THREADS: 1
+          # ASM_NASM: "C:/nasm/nasm.exe"
         shell: pwsh
         run: |
           Remove-Item -Recurse -Force "C:\Strawberry\"
