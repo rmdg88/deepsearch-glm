@@ -57,7 +57,7 @@ jobs:
           echo "python_cp_version=$cp_version" >> $GITHUB_ENV
 
       - name: Install zlib and bzip2 via VCPKG
-        if: ${{matrix.os.platform_id != 'win_amd64'}}
+        if: ${{matrix.os.platform_id == 'win_amd64'}}
         shell: pwsh
         run: |
           C:\vcpkg\vcpkg.exe install zlib:x64-windows-static
