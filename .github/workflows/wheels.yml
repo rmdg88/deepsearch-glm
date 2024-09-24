@@ -57,17 +57,18 @@ jobs:
           echo "python_cp_version=$cp_version" >> $GITHUB_ENV
 
       - name: Install zlib and bzip2 via VCPKG
+        if: ${{matrix.os.platform_id == 'win_amd64'}}
         shell: pwsh
         run: |
-          vcpkg install zlib:x64-windows-static -d C:\windows\external-libs && \
-          vcpkg install bzip2:x64-windows-static -d C:\windows\external-libs
+          vcpkg install zlib:x64-windows-static -d C:\external-libs && \
+          vcpkg install bzip2:x64-windows-static -d C:\external-libs
 
       - name: Set up external-libs [windows]
         if: ${{matrix.os.platform_id == 'win_amd64'}}
         shell: pwsh
         run: |
-          Get-ChildItem -Path C:\windows\external-libs -Recurse -Filter *zlib* | Select-Object FullName
-          Get-ChildItem -Path C:\windows\external-libs -Recurse -Filter *bz2* | Select-Object FullName
+          Get-ChildItem -Path C:\external-libs -Recurse -Filter *zlib* | Select-Object FullName
+          Get-ChildItem -Path C:\external-libs -Recurse -Filter *bz2* | Select-Object FullName
 
       - name: Set up MSYS2
         uses: msys2/setup-msys2@v2
