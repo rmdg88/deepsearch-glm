@@ -103,6 +103,7 @@ jobs:
           CIBW_BUILD_VERBOSITY: 3
           CIBW_ARCHS: AMD64
           CIBW_PROJECT_REQUIRES_PYTHON: "~=${{ matrix.python-version }}.0"
+          CMAKE_TOOLCHAIN_FILE: "C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
           # PKG_CONFIG_PATH: "C:/mingw64/lib/pkgconfig"
           # PKG_CONFIG_EXECUTABLE: "C:/mingw64/bin/pkg-config.exe"
           # CMAKE_PREFIX_PATH: "C:/mingw64"
