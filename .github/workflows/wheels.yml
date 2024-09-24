@@ -63,13 +63,13 @@ jobs:
       #     install: >
       #       mingw-w64-x86_64-toolchain 
 
-      - name: Install zlib and bzip2 via VCPKG
-        if: ${{matrix.os.platform_id == 'win_amd64'}}
-        shell: pwsh
-        run: |
-          C:\vcpkg\vcpkg.exe install zlib:x64-windows-static
-          C:\vcpkg\vcpkg.exe install bzip2:x64-windows-static
-          C:\vcpkg\vcpkg.exe integrate install
+      # - name: Install zlib and bzip2 via VCPKG
+      #   if: ${{matrix.os.platform_id == 'win_amd64'}}
+      #   shell: pwsh
+      #   run: |
+      #     C:\vcpkg\vcpkg.exe install zlib:x64-windows-static
+      #     C:\vcpkg\vcpkg.exe install bzip2:x64-windows-static
+      #     C:\vcpkg\vcpkg.exe integrate install
 
       # - name: Check libs
       #   if: ${{matrix.os.platform_id == 'win_amd64'}}
@@ -114,6 +114,9 @@ jobs:
         shell: pwsh
         run: |
           Remove-Item -Recurse -Force "C:\Strawberry\"
+          C:\vcpkg\vcpkg.exe install zlib:x64-windows-static
+          C:\vcpkg\vcpkg.exe install bzip2:x64-windows-static
+          C:\vcpkg\vcpkg.exe integrate install
           poetry install --no-interaction --no-root --only=build
           poetry run python -m cibuildwheel --output-dir .\wheelhouse
           Get-ChildItem -Path .\wheelhouse -Filter *.whl | Format-List
