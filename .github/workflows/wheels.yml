@@ -67,7 +67,8 @@ jobs:
         if: ${{matrix.os.platform_id == 'win_amd64'}}
         shell: msys2 {0}
         run: |
-          /mingw64/bin/python -m pip install poetry==1.8.3
+          export PATH="/mingw64/bin:$PATH"
+          python -m pip install poetry==1.8.3
       # - name: Set up NASM assembler [windows]
       #   if: ${{matrix.os.platform_id == 'win_amd64'}}
       #   shell: pwsh
@@ -83,8 +84,6 @@ jobs:
         if: ${{matrix.os.platform_id == 'win_amd64'}}
         shell: pwsh
         run: |
-          echo "C:\msys64\usr\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          echo "C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           $version = "${{ matrix.python-version }}"
           $cp_version = "cp$($version -replace '\.', '')"
           Add-Content -Path $env:GITHUB_ENV -Value "python_cp_version=$cp_version"
@@ -99,8 +98,9 @@ jobs:
         shell: msys2 {0}
         run: |
           #!/usr/bin/env bash
-          /mingw64/bin/poetry install --no-interaction --no-root --only=build
-          /mingw64/bin/poetry run python -m cibuildwheel --output-dir ./wheelhouse
+          export PATH="/mingw64/bin:$PATH"
+          poetry install --no-interaction --no-root --only=build
+          poetry run python -m cibuildwheel --output-dir ./wheelhouse
           echo "Wheel files in wheelhouse:"
           ls ./wheelhouse/*.whl
           for file in ./wheelhouse/*.whl; do
