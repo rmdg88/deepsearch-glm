@@ -67,29 +67,29 @@ jobs:
       #     Get-ChildItem -Path 'C:\windows-libs' -Recurse
 
       - name: Download and Extract bzip2
+        if: ${{matrix.os.platform_id == 'win_amd64'}}
         shell: pwsh
         run: |
           Invoke-WebRequest -Uri https://sourceware.org/pub/bzip2/bzip2-latest.tar.gz -OutFile bzip2-latest.tar.gz
           mkdir C:\temp\bzip2
           7z x bzip2-latest.tar.gz -oC:\temp\bzip2
-          7z x C:\temp\bzip2\bzip2-latest.tar -oC:\temp\bzip2
           cd C:\temp\bzip2\bzip2-latest\bzip2-1.0.8
           mingw64-make -f Makefile lib
           New-Item -Path 'C:\windows-libs' -ItemType Directory -Force
-          Copy-Item -Path C:\temp\bzip2\bzip2-1.0.8\libbz2.a -Destination C:\windows-libs\ -Force
+          Copy-Item -Path C:\temp\bzip2\bzip2-latest\bzip2-1.0.8\libbz2.a -Destination C:\windows-libs\ -Force
           cd C:\windows-libs
           dir
 
       - name: Download and Extract zlib
+        if: ${{matrix.os.platform_id == 'win_amd64'}}
         shell: pwsh
         run: |
           Invoke-WebRequest -Uri https://www.zlib.net/current/zlib.tar.gz -OutFile zlib.tar.gz
           mkdir C:\temp\zlib
           7z x zlib.tar.gz -oC:\temp\zlib
-          7z x C:\temp\zlib\zlib-*.tar -oC:\temp\zlib
           cd C:\temp\zlib\zlib\zlib-1.3.1
           mingw64-make -f Makefile
-          Copy-Item -Path C:\temp\zlib\zlib-*.*\libz.a -Destination C:\windows-libs\ -Force
+          Copy-Item -Path C:\temp\zlib\zlib\zlib-1.3.1\libz.a -Destination C:\windows-libs\ -Force
           cd C:\windows-libs
           dir
 
