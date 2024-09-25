@@ -83,7 +83,7 @@ jobs:
         shell: pwsh
         run: |
           Remove-Item -Recurse -Force "C:\Strawberry\"
-          $env:CMAKE_ARGS = "-DZLIB_LIBRARY=D:/a/deepsearch-glm/deepsearch-glm/windows-libs/libz.a -DBZIP2_LIBRARY=D:/a/deepsearch-glm/deepsearch-glm/windows-libs/libbz2.a"
+          $env:CMAKE_ARGS = "-DZLIB_LIBRARY=windows-libs/libz.a -DBZIP2_LIBRARY=windows-libs/libbz2.a"
           poetry install --no-interaction --no-root --only=build
           poetry run python -m cibuildwheel --output-dir .\wheelhouse
           Get-ChildItem -Path .\wheelhouse -Filter *.whl | Format-List
