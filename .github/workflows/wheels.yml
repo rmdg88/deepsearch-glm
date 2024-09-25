@@ -51,6 +51,7 @@ jobs:
       #     poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
 
       - name: Set up MSYS2
+        if: ${{matrix.os.platform_id == 'win_amd64'}}
         uses: msys2/setup-msys2@v2
         with:
           update: true
@@ -63,9 +64,10 @@ jobs:
             mingw-w64-x86_64-python-pip
 
       - name: Install Poetry
+        if: ${{matrix.os.platform_id == 'win_amd64'}}
+        shell: msys2 {0}
         run: |
-          pacman -S --noconfirm mingw-w64-x86_64-python-pip
-          pip install poetry==1.8.3
+          /mingw64/bin/python -m pip install poetry==1.8.3
       # - name: Set up NASM assembler [windows]
       #   if: ${{matrix.os.platform_id == 'win_amd64'}}
       #   shell: pwsh
@@ -85,8 +87,8 @@ jobs:
         shell: msys2 {0}
         run: |
           #!/usr/bin/env bash
-          poetry install --no-interaction --no-root --only=build
-          poetry run python -m cibuildwheel --output-dir ./wheelhouse
+          /mingw64/bin/poetry install --no-interaction --no-root --only=build
+          /mingw64/bin/poetry run python -m cibuildwheel --output-dir ./wheelhouse
           echo "Wheel files in wheelhouse:"
           ls ./wheelhouse/*.whl
           for file in ./wheelhouse/*.whl; do
