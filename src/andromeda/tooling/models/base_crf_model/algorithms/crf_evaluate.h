@@ -80,8 +80,8 @@ namespace andromeda_crf
     metrics_table()
   {
     model = std::make_shared<model_type>();
-
-    if(not model->load_from_file(model_file, false))
+    // if(not model->load_from_file(model_file, false))
+    if (not model->load_from_file(model_file.string(), false)) 
       {
         model = NULL;
         LOG_S(ERROR) << "could not read model from: " << model_file;
