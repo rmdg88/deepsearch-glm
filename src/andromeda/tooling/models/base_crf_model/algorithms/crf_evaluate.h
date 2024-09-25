@@ -62,7 +62,8 @@ namespace andromeda_crf
                        std::string tokenizer_mode):
     verbose(false),
 
-    model_file(model_file),
+    // model_file(model_file),
+    model_file(model_file.string()),
     tokenizer_mode(tokenizer_mode),
 
     model(NULL),
