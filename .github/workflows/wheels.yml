@@ -23,13 +23,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # - name: Setup Python
-      #   uses: actions/setup-python@v5
-      #   with:
-      #     python-version: ${{ matrix.python-version }}
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
 
-      # - name: Install Poetry
-      #   run: python -m pip install poetry==1.8.3
+      - name: Install Poetry
+        run: python -m pip install poetry==1.8.3
 
       - name: Set up custom PATH and set py version to cpXYZ [windows]
         if: ${{matrix.os.platform_id == 'win_amd64'}}
@@ -49,122 +49,59 @@ jobs:
           poetry config keyring.enabled false
           poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
 
-      # - name: Set up MSYS2
-      #   uses: msys2/setup-msys2@v2
-      #   with:
-      #     update: true
-      #     install: >
-      #       mingw-w64-x86_64-toolchain 
-      #       mingw-w64-i686-toolchain
-            
-      # - name: Set up QPDF external-libs [windows]
-      #   if: ${{matrix.os.platform_id == 'win_amd64'}}
-      #   shell: pwsh
-      #   run: |
-      #     New-Item -Path 'C:\windows-libs' -ItemType Directory -Force
-      # #     Invoke-WebRequest -Uri 'https://github.com/qpdf/external-libs/releases/download/release-2024-06-07/qpdf-external-libs-bin.zip' -OutFile 'C:\windows-libs\qpdf-external-libs-bin.zip'
-      # #     Expand-Archive -Path 'C:\windows-libs\qpdf-external-libs-bin.zip' -DestinationPath 'C:\windows-libs' -Force
-      # #     Get-ChildItem -Path 'C:\windows-libs' -Recurse
+      - name: Set up MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          install: >
+            mingw-w64-x86_64-toolchain 
+            mingw-w64-i686-toolchain
 
-
-      # - name: Build bzip2
-      #   if: ${{matrix.os.platform_id == 'win_amd64'}}
-      #   shell: cmd
-      #   run: |
-      #     call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
-
-      # - name: Set vcvars
-      #   if: ${{ matrix.os.platform_id == 'win_amd64' }}
-      #   shell: pwsh
-      #   run: |
-      #     & "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
-
-      - name: Download and Extract bzip2
+      - name: Set up NASM assembler [windows]
         if: ${{matrix.os.platform_id == 'win_amd64'}}
         shell: pwsh
         run: |
-          mkdir C:\temp\bzip2
-          cd C:\temp\bzip2
-          Invoke-WebRequest -Uri https://sourceware.org/pub/bzip2/bzip2-latest.tar.gz -OutFile bzip2-latest.tar.gz
-          7z x bzip2-latest.tar.gz -oC:\temp\bzip2
-          7z x bzip2-1.0.8.tar -oC:\temp\bzip2
-          dir
-          cd .\bzip2-1.0.8\
-          & "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
-          echo "C:\Users\runneradmin\.local\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          nmake /f .\makefile.msc
-          dir
+          New-Item -Path 'C:\nasm' -ItemType Directory -Force
+          Invoke-WebRequest -Uri 'https://fossies.org/windows/misc/nasm-2.16.03-win64.zip/nasm-2.16.03/nasm.exe' -OutFile 'C:\nasm\nasm.exe'
+          nasm -v
 
-      # - name: Build bzip2
-      #   shell: cmd
-      #   run: |
-      #     cd C:\temp\bzip2\bzip2-1.0.8
-      #     call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-      #     nmake -f makefile.msc
-      #     cd C:\windows-libs
-      #     dir
+      - name: Build wheels
+        if: ${{matrix.os.platform_id == 'win_amd64'}}
+        env:
+          CIBW_PLATFORM: windows
+          CIBW_BUILD_VERBOSITY: 3
+          CIBW_ARCHS: AMD64
+          CIBW_PROJECT_REQUIRES_PYTHON: "~=${{ matrix.python-version }}.0"
+          PKG_CONFIG_PATH: "C:/msys64/mingw64/lib/pkgconfig"
+          PKG_CONFIG_EXECUTABLE: "C:/msys64/usr/bin/pkg-config.exe"
+          CMAKE_PREFIX_PATH: "C:/msys64/mingw64"
+          CMAKE_LIBRARY_PATH: "C:/msys64/mingw64/lib"
+          CMAKE_INCLUDE_PATH: "C:/msys64/mingw64/include"
+          CMAKE_GENERATOR: "MSYS Makefiles"
+          BUILD_THREADS: 1
+          ASM_NASM: "C:/nasm/nasm.exe"
+        shell: pwsh
+        run: |
+          Remove-Item -Recurse -Force "C:\Strawberry\"
+          $env:CMAKE_ARGS = "-DZLIB_LIBRARY=D:/a/deepsearch-glm/deepsearch-glm/windows-libs/libz.a -DBZIP2_LIBRARY=D:/a/deepsearch-glm/deepsearch-glm/windows-libs/libbz2.a"
+          poetry install --no-interaction --no-root --only=build
+          poetry run python -m cibuildwheel --output-dir .\wheelhouse
+          Get-ChildItem -Path .\wheelhouse -Filter *.whl | Format-List
+          Get-ChildItem -Path .\wheelhouse -Filter *.whl | ForEach-Object {
+              $file = $_.FullName
+              Write-Output "Inspecting $file"
+              poetry run python -m zipfile --list "$file"
+          }
+          if (-not (Test-Path -Path .\dist)) {
+              New-Item -Path .\dist -ItemType Directory
+          }
+          Copy-Item -Path .\wheelhouse\*.whl -Destination .\dist\
 
-      # - name: Download and Extract zlib
-      #   if: ${{matrix.os.platform_id == 'win_amd64'}}
-      #   shell: pwsh
-      #   run: |
-      #     mkdir C:\temp\zlib
-      #     cd C:\temp\zlib
-      #     Invoke-WebRequest -Uri https://www.zlib.net/current/zlib.tar.gz -OutFile zlib.tar.gz
-      #     7z x zlib.tar.gz -oC:\temp\zlib
-      #     dir
-      #     7z x zlib.tar -oC:\temp\zlib
-      #     cd .\zlib-1.3.1\
-      #     mingw32-make -f Makefile
-      #     Copy-Item -Path .\libz.a -Destination C:\windows-libs\ -Force
-      #     cd C:\windows-libs
-      #     dir
+      - name: publish wheels (dry run)
+        run: |
+          poetry publish --dry-run --no-interaction -vvv
 
-      # - name: Set up NASM assembler [windows]
-      #   if: ${{matrix.os.platform_id == 'win_amd64'}}
-      #   shell: pwsh
-      #   run: |
-      #     New-Item -Path 'C:\nasm' -ItemType Directory -Force
-      #     Invoke-WebRequest -Uri 'https://fossies.org/windows/misc/nasm-2.16.03-win64.zip/nasm-2.16.03/nasm.exe' -OutFile 'C:\nasm\nasm.exe'
-      #     nasm -v
-
-      # - name: Build wheels
-      #   if: ${{matrix.os.platform_id == 'win_amd64'}}
-      #   env:
-      #     CIBW_PLATFORM: windows
-      #     CIBW_BUILD_VERBOSITY: 3
-      #     CIBW_ARCHS: AMD64
-      #     CIBW_PROJECT_REQUIRES_PYTHON: "~=${{ matrix.python-version }}.0"
-      #     PKG_CONFIG_PATH: "C:/msys64/mingw64/lib/pkgconfig"
-      #     PKG_CONFIG_EXECUTABLE: "C:/msys64/usr/bin/pkg-config.exe"
-      #     CMAKE_PREFIX_PATH: "C:/msys64/mingw64;C:/windows-libs/external-libs"
-      #     CMAKE_LIBRARY_PATH: "C:/msys64/mingw64/lib;C:/windows-libs/external-libs/lib-mingw64"
-      #     CMAKE_INCLUDE_PATH: "C:/msys64/mingw64/include;C:/windows-libs/external-libs/include"
-      #     CMAKE_GENERATOR: "MSYS Makefiles"
-      #     BUILD_THREADS: 1
-      #     ASM_NASM: "C:/nasm/nasm.exe"
-      #   shell: pwsh
-      #   run: |
-      #     Remove-Item -Recurse -Force "C:\Strawberry\"
-      #     $env:CMAKE_ARGS = "-DZLIB_LIBRARY=C:/windows-libs/libz.a -DBZIP2_LIBRARY=C:/windows-libs/libbz2.a"
-      #     poetry install --no-interaction --no-root --only=build
-      #     poetry run python -m cibuildwheel --output-dir .\wheelhouse
-      #     Get-ChildItem -Path .\wheelhouse -Filter *.whl | Format-List
-      #     Get-ChildItem -Path .\wheelhouse -Filter *.whl | ForEach-Object {
-      #         $file = $_.FullName
-      #         Write-Output "Inspecting $file"
-      #         poetry run python -m zipfile --list "$file"
-      #     }
-      #     if (-not (Test-Path -Path .\dist)) {
-      #         New-Item -Path .\dist -ItemType Directory
-      #     }
-      #     Copy-Item -Path .\wheelhouse\*.whl -Destination .\dist\
-
-      # - name: publish wheels (dry run)
-      #   run: |
-      #     poetry publish --dry-run --no-interaction -vvv
-
-      # - name: publish wheels (on publishing) [for releases only]
-      #   if: ${{ startsWith(github.ref, 'refs/tags/') }}
-      #   run: |
-      #     poetry publish --no-interaction -vvv
+      - name: publish wheels (on publishing) [for releases only]
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        run: |
+          poetry publish --no-interaction -vvv
