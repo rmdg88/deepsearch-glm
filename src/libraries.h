@@ -15,6 +15,10 @@
 #define LOGURU_WITH_STREAMS 1
 #endif
 
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include <loguru/loguru.cpp>
 #include <cxxopts.hpp>
 #include <nlohmann/json.hpp>
