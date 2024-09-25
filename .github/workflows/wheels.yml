@@ -74,6 +74,7 @@ jobs:
           cd C:\temp\bzip2
           Invoke-WebRequest -Uri https://sourceware.org/pub/bzip2/bzip2-latest.tar.gz -OutFile bzip2-latest.tar.gz
           7z x bzip2-latest.tar.gz -oC:\temp\bzip2
+          7z x bzip2-latest.tar -oC:\temp\bzip2
           dir
           mingw64-make -f Makefile lib
           New-Item -Path 'C:\windows-libs' -ItemType Directory -Force
