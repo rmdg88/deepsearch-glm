@@ -1,4 +1,7 @@
 //-*-C++-*-
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 
 #include <filesystem>
 
