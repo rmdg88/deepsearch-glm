@@ -77,11 +77,11 @@ jobs:
           7z x bzip2-1.0.8.tar -oC:\temp\bzip2
 
       - name: Build bzip2
+        shell: pwsh
         run: |
           cd C:\temp\bzip2\bzip2-1.0.8
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat" x86
+          & "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat" x86
           nmake -f makefile.msc
-          Copy-Item -Path .\libbz2.a -Destination C:\windows-libs\ -Force
           cd C:\windows-libs
           dir
 
