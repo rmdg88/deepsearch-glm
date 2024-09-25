@@ -78,17 +78,14 @@ jobs:
           7z x bzip2-latest.tar.gz -oC:\temp\bzip2
           7z x bzip2-1.0.8.tar -oC:\temp\bzip2
 
-      - task: BatchScript@1
-        displayName: 'Set up vcvarsall'
-        inputs:
-          filename: 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat'
-          arguments: x64
-          modifyEnvironment: true
-      - script: |
-        cd C:\temp\bzip2\bzip2-1.0.8
-        nmake -f makefile.msc
-        dir
-
+      - name: Build bzip2
+        if: ${{matrix.os.platform_id == 'win_amd64'}}
+        shell: cmd
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat"
+          cd C:\temp\bzip2\bzip2-1.0.8
+          nmake -f makefile.msc
+          dir
 
       # - name: Build bzip2
       #   shell: cmd
