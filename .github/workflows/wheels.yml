@@ -77,14 +77,20 @@ jobs:
           Invoke-WebRequest -Uri https://sourceware.org/pub/bzip2/bzip2-latest.tar.gz -OutFile bzip2-latest.tar.gz
           7z x bzip2-latest.tar.gz -oC:\temp\bzip2
           7z x bzip2-1.0.8.tar -oC:\temp\bzip2
+          dir
 
       - name: Build bzip2
         if: ${{matrix.os.platform_id == 'win_amd64'}}
         shell: cmd
         run: |
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
+          cd C:\temp\bzip2\bzip2-1.0.8 && nmake -f makefile.msc
+
+      - name: Check bzip2
+        if: ${{matrix.os.platform_id == 'win_amd64'}}
+        shell: pwsh
+        run: |
           cd C:\temp\bzip2\bzip2-1.0.8
-          nmake -f makefile.msc
           dir
 
       # - name: Build bzip2
