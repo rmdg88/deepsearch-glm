@@ -67,6 +67,17 @@ jobs:
       # #     Get-ChildItem -Path 'C:\windows-libs' -Recurse
 
 
+      # - name: Build bzip2
+      #   if: ${{matrix.os.platform_id == 'win_amd64'}}
+      #   shell: cmd
+      #   run: |
+      #     call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
+
+      - name: Set vcvars
+        if: ${{ matrix.os.platform_id == 'win_amd64' }}
+        shell: pwsh
+        run: |
+          & "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
 
       - name: Download and Extract bzip2
         if: ${{matrix.os.platform_id == 'win_amd64'}}
@@ -78,21 +89,8 @@ jobs:
           7z x bzip2-latest.tar.gz -oC:\temp\bzip2
           7z x bzip2-1.0.8.tar -oC:\temp\bzip2
           dir
-
-      - name: Build bzip2
-        if: ${{matrix.os.platform_id == 'win_amd64'}}
-        shell: cmd
-        run: |
-          cd C:\temp\bzip2\bzip2-1.0.8
-          dir
-          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
-          nmake -f C:\temp\bzip2\bzip2-1.0.8\makefile.msc
-
-      - name: Check bzip2
-        if: ${{matrix.os.platform_id == 'win_amd64'}}
-        shell: pwsh
-        run: |
-          cd C:\temp\bzip2\bzip2-1.0.8
+          cd .\bzip2-1.0.8\
+          nmake -f \makefile.msc
           dir
 
       # - name: Build bzip2
