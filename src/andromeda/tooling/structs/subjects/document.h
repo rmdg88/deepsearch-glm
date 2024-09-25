@@ -482,7 +482,8 @@ namespace andromeda
         LOG_S(WARNING) << "no `file-info.document-hash detected ...`";
 
         // std::string name = filepath.c_str();
-        std::string name = filepath.u8string();
+        std::string name = std::string(filepath.u8string().begin(), filepath.u8string().end());
+
 
         set_name(name);
         //doc_name = filepath.c_str();

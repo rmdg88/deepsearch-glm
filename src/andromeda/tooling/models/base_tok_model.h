@@ -90,7 +90,7 @@ namespace andromeda
       }
 
     // const auto status = model->Load(path.c_str());
-    const auto status = model->Load(path.u8string());
+    const auto status = model->Load(std::string(path.u8string().begin(), path.u8string().end()));
 
     if(!status.ok())
       {
