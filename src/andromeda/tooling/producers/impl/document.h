@@ -215,9 +215,12 @@ namespace andromeda
 
     while((not valid) and (path_itr!=path_end))
       {
-	LOG_S(INFO) << "reading: " << path_itr->c_str();
+	// LOG_S(INFO) << "reading: " << path_itr->c_str();
+  LOG_S(INFO) << "reading: " << path_itr->string();
 
-	std::ifstream ifs(path_itr->c_str());
+	// std::ifstream ifs(path_itr->c_str());
+  std::ifstream ifs(path_itr->string());
+
 	if(ifs)
 	  {
 	    nlohmann::json data;
@@ -269,14 +272,17 @@ namespace andromeda
     std::filesystem::path outfile;// = filedir;
     if(not get_output_file(outfile, filedir, filename))
       {
-	LOG_S(ERROR) << "can not write: " << outfile.c_str();
+	// LOG_S(ERROR) << "can not write: " << outfile.c_str();
+  LOG_S(ERROR) << "can not write: " << outfile.string();
 	return false;
       }
     
-    LOG_S(INFO) << "writing: " << outfile.c_str();
+    // LOG_S(INFO) << "writing: " << outfile.c_str();
+    LOG_S(ERROR) << "writing: " << outfile.string();
     
     std::ofstream ofs;
-    ofs.open(outfile.c_str(), std::ofstream::out);
+    // ofs.open(outfile.c_str(), std::ofstream::out);
+    ofs.open(outfile.string(), std::ofstream::out);
     
     if(ofs.good())
       {
