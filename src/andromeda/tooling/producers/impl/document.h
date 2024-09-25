@@ -282,7 +282,8 @@ namespace andromeda
       {
 	nlohmann::json data = subj.to_json({});
 
-	std::string ext=outfile.extension();
+	// std::string ext=outfile.extension();
+  std::string ext = outfile.extension().string();
 	if(ext==".json")
 	  {
 	    ofs << std::setw(4) << data;

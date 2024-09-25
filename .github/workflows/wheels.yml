@@ -82,6 +82,7 @@ jobs:
           CMAKE_GENERATOR: "MSYS Makefiles"
           BUILD_THREADS: 1
           ASM_NASM: "C:/nasm/nasm.exe"
+          SPM_USE_EXTERNAL_ABSL: "OFF"
         shell: pwsh
         run: |
           Remove-Item -Recurse -Force "C:\Strawberry\"
