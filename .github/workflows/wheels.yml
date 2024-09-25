@@ -76,8 +76,7 @@ jobs:
           7z x bzip2-latest.tar.gz -oC:\temp\bzip2
           7z x bzip2-1.0.8.tar -oC:\temp\bzip2
           cd .\bzip2-1.0.8\
-          dir
-          mingw64-make -f Makefile lib
+          mingw32-make -f Makefile lib
           Copy-Item -Path .\libbz2.a -Destination C:\windows-libs\ -Force
           cd C:\windows-libs
           dir
@@ -93,7 +92,7 @@ jobs:
           dir
           7z x zlib.tar -oC:\temp\zlib
           cd .\zlib-1.3.1\
-          mingw64-make -f Makefile
+          mingw32-make -f Makefile
           Copy-Item -Path .\libz.a -Destination C:\windows-libs\ -Force
           cd C:\windows-libs
           dir
