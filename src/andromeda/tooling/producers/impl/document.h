@@ -179,7 +179,8 @@ namespace andromeda
   
   bool producer<DOCUMENT>::set_ofs(std::filesystem::path path)
   {
-    base_producer::opath = path;
+    // base_producer::opath = path;
+    base_producer::opath = path.string();
     base_producer::write_output = true;
     
     return true;

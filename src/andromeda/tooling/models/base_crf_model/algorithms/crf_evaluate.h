@@ -237,7 +237,8 @@ namespace andromeda_crf
 	perfect_preds += correct? 1:0;
       }
 
-    write_metrics(metrics_file);
+    // write_metrics(metrics_file);
+    write_metrics(metrics_file.string());
 
     return true;
   }
