@@ -45,21 +45,43 @@ namespace andromeda
       return ss.str();
     }
 
+  //   std::string show_list(std::vector<std::string>& data,
+	// 		  std::stringstream& ss, std::size_t max_width=70)
+  //   {
+  //     for(std::size_t l=0; l<data.size(); l++)
+	// {
+	//   std::string tag = "["+std::to_string(l)+"] ";
+
+	//   ss << tag;
+	//   show_string(data.at(l), ss, tag.size(), max_width);
+	// }
+  //     ss << "\n";
+
+  //     return ss.str();
+  //   }
+
     std::string show_list(std::vector<std::string>& data,
-			  std::stringstream& ss, std::size_t max_width=70)
+                          std::stringstream& ss, std::size_t max_width = 70)
     {
-      for(std::size_t l=0; l<data.size(); l++)
-	{
-	  std::string tag = "["+std::to_string(l)+"] ";
+        std::size_t num_elements = data.size();
+        if (num_elements == 0) {
+            return "[]";
+        }
 
-	  ss << tag;
-	  show_string(data.at(l), ss, tag.size(), max_width);
-	}
-      ss << "\n";
+        for (std::size_t l = 0; l < num_elements; l++)
+        {
+            std::string tag = "[" + std::to_string(l) + "] ";
 
-      return ss.str();
+            ss << tag;
+
+            show_string(data.at(l), ss, tag.size(), max_width);
+        }
+
+        ss << "\n";
+
+        return ss.str();
     }
-    
+
     std::string show_table(std::vector<std::vector<std::string> >& data,
                            std::stringstream& ss,
 			   std::size_t max_width=32,

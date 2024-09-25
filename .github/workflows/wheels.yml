@@ -55,17 +55,17 @@ jobs:
           update: true
           install: >
             mingw-w64-x86_64-toolchain 
-            mingw-w64-i686-toolchain
-            zlib-devel
-            libbz2-devel
+            mingw-w64-x86_64-zlib
+            mingw-w64-x86_64-bzip2
+            mingw-w64-x86_64-pcre2
 
-      - name: Set up NASM assembler [windows]
-        if: ${{matrix.os.platform_id == 'win_amd64'}}
-        shell: pwsh
-        run: |
-          New-Item -Path 'C:\nasm' -ItemType Directory -Force
-          Invoke-WebRequest -Uri 'https://fossies.org/windows/misc/nasm-2.16.03-win64.zip/nasm-2.16.03/nasm.exe' -OutFile 'C:\nasm\nasm.exe'
-          nasm -v
+      # - name: Set up NASM assembler [windows]
+      #   if: ${{matrix.os.platform_id == 'win_amd64'}}
+      #   shell: pwsh
+      #   run: |
+      #     New-Item -Path 'C:\nasm' -ItemType Directory -Force
+      #     Invoke-WebRequest -Uri 'https://fossies.org/windows/misc/nasm-2.16.03-win64.zip/nasm-2.16.03/nasm.exe' -OutFile 'C:\nasm\nasm.exe'
+      #     nasm -v
 
       - name: Build wheels
         if: ${{matrix.os.platform_id == 'win_amd64'}}
@@ -74,30 +74,22 @@ jobs:
           CIBW_BUILD_VERBOSITY: 3
           CIBW_ARCHS: AMD64
           CIBW_PROJECT_REQUIRES_PYTHON: "~=${{ matrix.python-version }}.0"
-          PKG_CONFIG_PATH: "C:/msys64/usr/lib/pkgconfig"
-          PKG_CONFIG_EXECUTABLE: "C:/msys64/usr/bin/pkg-config.exe;C:/mingw64/bin/pkg-config.exe"
-          CMAKE_PREFIX_PATH: "C:/msys64/mingw64;C:/msys64/usr"
-          CMAKE_LIBRARY_PATH: "C:/msys64/mingw64/lib;C:/msys64/usr/lib;C:/mingw64/lib"
-          CMAKE_INCLUDE_PATH: "C:/msys64/mingw64/include;C:/msys64/usr/include;C:/mingw64/include"
-          CMAKE_GENERATOR: "MSYS Makefiles"
           BUILD_THREADS: 1
-          ASM_NASM: "C:/nasm/nasm.exe"
-          SPM_USE_EXTERNAL_ABSL: "OFF"
-        shell: pwsh
+        shell: msys2 {0}
         run: |
-          Remove-Item -Recurse -Force "C:\Strawberry\"
+          #!/usr/bin/env bash
           poetry install --no-interaction --no-root --only=build
-          poetry run python -m cibuildwheel --output-dir .\wheelhouse
-          Get-ChildItem -Path .\wheelhouse -Filter *.whl | Format-List
-          Get-ChildItem -Path .\wheelhouse -Filter *.whl | ForEach-Object {
-              $file = $_.FullName
-              Write-Output "Inspecting $file"
+          poetry run python -m cibuildwheel --output-dir ./wheelhouse
+          echo "Wheel files in wheelhouse:"
+          ls ./wheelhouse/*.whl
+          for file in ./wheelhouse/*.whl; do
+              echo "Inspecting $file"
               poetry run python -m zipfile --list "$file"
-          }
-          if (-not (Test-Path -Path .\dist)) {
-              New-Item -Path .\dist -ItemType Directory
-          }
-          Copy-Item -Path .\wheelhouse\*.whl -Destination .\dist\
+          done
+          if [ ! -d "./dist" ]; then
+              mkdir ./dist
+          fi
+          cp ./wheelhouse/*.whl ./dist/
 
       - name: publish wheels (dry run)
         run: |
@@ -108,5 +100,38 @@ jobs:
         run: |
           poetry publish --no-interaction -vvv
 
-          # CMAKE_LIBRARY_PATH: "C:/msys64/mingw64/lib;D:/a/deepsearch-glm/deepsearch-glm/windows-libs"
-          # CMAKE_INCLUDE_PATH: "C:/msys64/mingw64/include;D:/a/deepsearch-glm/deepsearch-glm/windows-libs/include"
+      # CMAKE_LIBRARY_PATH: "C:/msys64/mingw64/lib;D:/a/deepsearch-glm/deepsearch-glm/windows-libs"
+      # CMAKE_INCLUDE_PATH: "C:/msys64/mingw64/include;D:/a/deepsearch-glm/deepsearch-glm/windows-libs/include"
+      # ASM_NASM: "C:/nasm/nasm.exe"
+      # SPM_USE_EXTERNAL_ABSL: "OFF"
+      # - name: Build wheels
+      #   if: ${{matrix.os.platform_id == 'win_amd64'}}
+      #   env:
+      #     CIBW_PLATFORM: windows
+      #     CIBW_BUILD_VERBOSITY: 3
+      #     CIBW_ARCHS: AMD64
+      #     CIBW_PROJECT_REQUIRES_PYTHON: "~=${{ matrix.python-version }}.0"
+      #     PKG_CONFIG_PATH: "C:/msys64/usr/lib/pkgconfig"
+      #     PKG_CONFIG_EXECUTABLE: "C:/msys64/usr/bin/pkg-config.exe;C:/mingw64/bin/pkg-config.exe"
+      #     CMAKE_PREFIX_PATH: "C:/msys64/mingw64;C:/msys64/usr"
+      #     CMAKE_LIBRARY_PATH: "C:/msys64/mingw64/lib;C:/msys64/usr/lib;C:/mingw64/lib"
+      #     CMAKE_INCLUDE_PATH: "C:/msys64/mingw64/include;C:/msys64/usr/include;C:/mingw64/include"
+      #     CMAKE_GENERATOR: "MSYS Makefiles"
+      #     BUILD_THREADS: 1
+      #     ASM_NASM: "C:/nasm/nasm.exe"
+      #     SPM_USE_EXTERNAL_ABSL: "OFF"
+      #   shell: pwsh
+      #   run: |
+      #     Remove-Item -Recurse -Force "C:\Strawberry\"
+      #     poetry install --no-interaction --no-root --only=build
+      #     poetry run python -m cibuildwheel --output-dir .\wheelhouse
+      #     Get-ChildItem -Path .\wheelhouse -Filter *.whl | Format-List
+      #     Get-ChildItem -Path .\wheelhouse -Filter *.whl | ForEach-Object {
+      #         $file = $_.FullName
+      #         Write-Output "Inspecting $file"
+      #         poetry run python -m zipfile --list "$file"
+      #     }
+      #     if (-not (Test-Path -Path .\dist)) {
+      #         New-Item -Path .\dist -ItemType Directory
+      #     }
+      #     Copy-Item -Path .\wheelhouse\*.whl -Destination .\dist\
