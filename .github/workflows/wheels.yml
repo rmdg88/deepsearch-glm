@@ -88,6 +88,13 @@ jobs:
           }
           Copy-Item -Path .\wheelhouse\*.whl -Destination .\dist\
 
+      - name: Upload wheels
+        if: ${{ matrix.os.platform_id == 'win_amd64' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels
+          path: ./dist/*.whl
+          
       - name: publish wheels (dry run)
         run: |
           poetry publish --dry-run --no-interaction -vvv
