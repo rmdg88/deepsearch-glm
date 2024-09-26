@@ -77,16 +77,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-sign-compare -O3 -DROOT_PATH='\"${TOPLEVEL_PREFIX_PATH}\"' ${ENV_ARCHFLAGS}")
 
 if (WIN32)
-    set(TEST_PATH "\\\"${TOPLEVEL_PREFIX_PATH}\\\"")
-    add_definitions(-DROOT_PATH="\\\"${TOPLEVEL_PREFIX_PATH}\\\"")
-    set(CMAKE_LIB_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-sign-compare -O3 ${ENV_ARCHFLAGS}")
+    add_definitions(-DNOMINMAX)
+    add_definitions(-DROOT_PATH="\"${TOPLEVEL_PREFIX_PATH}\"")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-sign-compare -O3 ${ENV_ARCHFLAGS}")
 else()
-    set(CMAKE_LIB_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-sign-compare -O3 -DROOT_PATH='\"${TOPLEVEL_PREFIX_PATH}\"' ${ENV_ARCHFLAGS}")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-sign-compare -O3 -DROOT_PATH='\"${TOPLEVEL_PREFIX_PATH}\"' ${ENV_ARCHFLAGS}")
 endif()
-
-add_definitions(-DNOMINMAX)
 
 message(STATUS "cxx-compiler: " ${CMAKE_CXX_COMPILER})
 message(STATUS "cxx-flags   : " ${CMAKE_CXX_FLAGS})
