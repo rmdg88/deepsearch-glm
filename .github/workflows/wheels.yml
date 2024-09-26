@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11"]
+        python-version: ["3.12"]
 
         os:
           - name: "windows-latest"
@@ -23,32 +23,31 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # - name: Setup Python
-      #   uses: actions/setup-python@v5
-      #   with:
-      #     python-version: ${{ matrix.python-version }}
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
 
-      # - name: Install Poetry
-      #   run: python -m pip install poetry==1.8.3
+      - name: Install Poetry
+        run: python -m pip install poetry==1.8.3
 
-      # - name: Set up custom PATH and set py version to cpXYZ [windows]
-      #   if: ${{matrix.os.platform_id == 'win_amd64'}}
-      #   shell: pwsh
-      #   run: |
-      #     echo "C:\msys64\usr\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-      #     echo "C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-      #     echo "C:\Users\runneradmin\.local\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-      #     echo "C:\nasm" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-      #     $version = "${{ matrix.python-version }}"
-      #     $cp_version = "cp$($version -replace '\.', '')"
-      #     Add-Content -Path $env:GITHUB_ENV -Value "python_cp_version=$cp_version"
+      - name: Set up custom PATH and set py version to cpXYZ [windows]
+        if: ${{matrix.os.platform_id == 'win_amd64'}}
+        shell: pwsh
+        run: |
+          echo "C:\msys64\usr\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo "C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo "C:\Users\runneradmin\.local\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo "C:\nasm" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          $version = "${{ matrix.python-version }}"
+          $cp_version = "cp$($version -replace '\.', '')"
+          Add-Content -Path $env:GITHUB_ENV -Value "python_cp_version=$cp_version"
 
-
-      # - name: Setup pypi for poetry [for releases only]
-      #   if: ${{ startsWith(github.ref, 'refs/tags/') }}
-      #   run: |
-      #     poetry config keyring.enabled false
-      #     poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
+      - name: Setup pypi for poetry [for releases only]
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        run: |
+          poetry config keyring.enabled false
+          poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
 
       - name: Set up MSYS2
         if: ${{matrix.os.platform_id == 'win_amd64'}}
@@ -56,37 +55,9 @@ jobs:
         with:
           update: true
           install: >
-            mingw-w64-x86_64-toolchain 
-            mingw-w64-x86_64-zlib
-            mingw-w64-x86_64-bzip2
-            mingw-w64-x86_64-pcre2
-            mingw-w64-x86_64-python
-            mingw-w64-x86_64-python-pip
+            mingw-w64-x86_64-toolchain
+            mingw-w64-i686-toolchain
 
-      - name: Install Poetry
-        if: ${{matrix.os.platform_id == 'win_amd64'}}
-        shell: msys2 {0}
-        run: |
-          export PATH="/mingw64/bin:$PATH"
-          python -m pip install poetry==1.8.3
-      # - name: Set up NASM assembler [windows]
-      #   if: ${{matrix.os.platform_id == 'win_amd64'}}
-      #   shell: pwsh
-      #   run: |
-      #     New-Item -Path 'C:\nasm' -ItemType Directory -Force
-      #     Invoke-WebRequest -Uri 'https://fossies.org/windows/misc/nasm-2.16.03-win64.zip/nasm-2.16.03/nasm.exe' -OutFile 'C:\nasm\nasm.exe'
-      #     nasm -v
-      # - name: Add Python to PATH
-      #   run: |
-      #     echo "Adding Python to PATH"
-      #     echo "/c/msys64/mingw64/bin" >> $GITHUB_PATH
-      - name: Set up custom PATH and set py version to cpXYZ [windows]
-        if: ${{matrix.os.platform_id == 'win_amd64'}}
-        shell: pwsh
-        run: |
-          $version = "${{ matrix.python-version }}"
-          $cp_version = "cp$($version -replace '\.', '')"
-          Add-Content -Path $env:GITHUB_ENV -Value "python_cp_version=$cp_version"
       - name: Build wheels
         if: ${{matrix.os.platform_id == 'win_amd64'}}
         env:
@@ -94,65 +65,34 @@ jobs:
           CIBW_BUILD_VERBOSITY: 3
           CIBW_ARCHS: AMD64
           CIBW_PROJECT_REQUIRES_PYTHON: "~=${{ matrix.python-version }}.0"
+          PKG_CONFIG_PATH: "C:/msys64/usr/lib/pkgconfig"
+          PKG_CONFIG_EXECUTABLE: "C:/mingw64/bin/pkg-config.exe"
+          CMAKE_PREFIX_PATH: "C:/msys64/mingw64"
+          CMAKE_LIBRARY_PATH: "C:/msys64/mingw64/lib;../windows-libs/lib"
+          CMAKE_INCLUDE_PATH: "C:/msys64/mingw64/include;../windows-libs/include"
+          CMAKE_GENERATOR: "MSYS Makefiles"
           BUILD_THREADS: 1
-        shell: msys2 {0}
+        shell: pwsh
         run: |
-          #!/usr/bin/env bash
-          export PATH="/mingw64/bin:$PATH"
+          Remove-Item -Recurse -Force "C:\Strawberry\"
           poetry install --no-interaction --no-root --only=build
-          poetry run python -m cibuildwheel --output-dir ./wheelhouse
-          echo "Wheel files in wheelhouse:"
-          ls ./wheelhouse/*.whl
-          for file in ./wheelhouse/*.whl; do
-              echo "Inspecting $file"
+          poetry run python -m cibuildwheel --output-dir .\wheelhouse
+          Get-ChildItem -Path .\wheelhouse -Filter *.whl | Format-List
+          Get-ChildItem -Path .\wheelhouse -Filter *.whl | ForEach-Object {
+              $file = $_.FullName
+              Write-Output "Inspecting $file"
               poetry run python -m zipfile --list "$file"
-          done
-          if [ ! -d "./dist" ]; then
-              mkdir ./dist
-          fi
-          cp ./wheelhouse/*.whl ./dist/
+          }
+          if (-not (Test-Path -Path .\dist)) {
+              New-Item -Path .\dist -ItemType Directory
+          }
+          Copy-Item -Path .\wheelhouse\*.whl -Destination .\dist\
 
       - name: publish wheels (dry run)
         run: |
           poetry publish --dry-run --no-interaction -vvv
 
-      # - name: publish wheels (on publishing) [for releases only]
-      #   if: ${{ startsWith(github.ref, 'refs/tags/') }}
-      #   run: |
-      #     poetry publish --no-interaction -vvv
-
-      # CMAKE_LIBRARY_PATH: "C:/msys64/mingw64/lib;D:/a/deepsearch-glm/deepsearch-glm/windows-libs"
-      # CMAKE_INCLUDE_PATH: "C:/msys64/mingw64/include;D:/a/deepsearch-glm/deepsearch-glm/windows-libs/include"
-      # ASM_NASM: "C:/nasm/nasm.exe"
-      # SPM_USE_EXTERNAL_ABSL: "OFF"
-      # - name: Build wheels
-      #   if: ${{matrix.os.platform_id == 'win_amd64'}}
-      #   env:
-      #     CIBW_PLATFORM: windows
-      #     CIBW_BUILD_VERBOSITY: 3
-      #     CIBW_ARCHS: AMD64
-      #     CIBW_PROJECT_REQUIRES_PYTHON: "~=${{ matrix.python-version }}.0"
-      #     PKG_CONFIG_PATH: "C:/msys64/usr/lib/pkgconfig"
-      #     PKG_CONFIG_EXECUTABLE: "C:/msys64/usr/bin/pkg-config.exe;C:/mingw64/bin/pkg-config.exe"
-      #     CMAKE_PREFIX_PATH: "C:/msys64/mingw64;C:/msys64/usr"
-      #     CMAKE_LIBRARY_PATH: "C:/msys64/mingw64/lib;C:/msys64/usr/lib;C:/mingw64/lib"
-      #     CMAKE_INCLUDE_PATH: "C:/msys64/mingw64/include;C:/msys64/usr/include;C:/mingw64/include"
-      #     CMAKE_GENERATOR: "MSYS Makefiles"
-      #     BUILD_THREADS: 1
-      #     ASM_NASM: "C:/nasm/nasm.exe"
-      #     SPM_USE_EXTERNAL_ABSL: "OFF"
-      #   shell: pwsh
-      #   run: |
-      #     Remove-Item -Recurse -Force "C:\Strawberry\"
-      #     poetry install --no-interaction --no-root --only=build
-      #     poetry run python -m cibuildwheel --output-dir .\wheelhouse
-      #     Get-ChildItem -Path .\wheelhouse -Filter *.whl | Format-List
-      #     Get-ChildItem -Path .\wheelhouse -Filter *.whl | ForEach-Object {
-      #         $file = $_.FullName
-      #         Write-Output "Inspecting $file"
-      #         poetry run python -m zipfile --list "$file"
-      #     }
-      #     if (-not (Test-Path -Path .\dist)) {
-      #         New-Item -Path .\dist -ItemType Directory
-      #     }
-      #     Copy-Item -Path .\wheelhouse\*.whl -Destination .\dist\
+      - name: publish wheels (on publishing) [for releases only]
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        run: |
+          poetry publish --no-interaction -vvv
