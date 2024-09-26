@@ -4,7 +4,9 @@ message(STATUS "entering in 'os_opts.cmake'")
 
 if(WIN32)
    message(STATUS "compiling on windows")
-   set(LIB_LINK fmt json loguru cxxopts pcre2 sentencepiece sentencepiece_train fasttext utf8 z)
+   #set(LIB_LINK fmt json loguru cxxopts pcre2 sentencepiece sentencepiece_train fasttext utf8 z)
+   set(LIB_LINK fmt json loguru cxxopts pcre2 sentencepiece sentencepiece_train fasttext utf8 z ws2_32 user32)
+   add_definitions(-DPCRE2_STATIC)
 
 elseif(APPLE)
    message(STATUS "compiling on mac-osx")
