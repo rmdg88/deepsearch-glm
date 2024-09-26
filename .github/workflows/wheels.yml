@@ -68,8 +68,8 @@ jobs:
           PKG_CONFIG_PATH: "C:/msys64/usr/lib/pkgconfig"
           PKG_CONFIG_EXECUTABLE: "C:/mingw64/bin/pkg-config.exe"
           CMAKE_PREFIX_PATH: "C:/msys64/mingw64"
-          CMAKE_LIBRARY_PATH: "C:/msys64/mingw64/lib;../windows-libs/lib"
-          CMAKE_INCLUDE_PATH: "C:/msys64/mingw64/include;../windows-libs/include"
+          CMAKE_LIBRARY_PATH: "C:/msys64/mingw64/lib"
+          CMAKE_INCLUDE_PATH: "C:/msys64/mingw64/include"
           CMAKE_GENERATOR: "MSYS Makefiles"
           BUILD_THREADS: 1
         shell: pwsh
