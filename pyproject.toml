@@ -9,7 +9,7 @@ packages = [{include = "deepsearch_glm"}]
 include = [
     {path = "deepsearch_glm/*.so", format = "wheel"},
     {path = "deepsearch_glm/*.pyd", format = "wheel"},
-    {path = "*.dll", format = "wheel"}
+    {path = "deepsearch_glm/*.dll", format = "wheel"}
 ]
 build = "build.py"
 
