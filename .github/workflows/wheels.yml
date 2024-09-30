@@ -71,6 +71,7 @@ jobs:
           CMAKE_LIBRARY_PATH: "C:/msys64/mingw64/lib"
           CMAKE_INCLUDE_PATH: "C:/msys64/mingw64/include"
           CMAKE_GENERATOR: "MSYS Makefiles"
+          CMAKE_CXX_FLAGS: "-static-libgcc -static-libstdc++ -static"
           BUILD_THREADS: 1
         shell: pwsh
         run: |
