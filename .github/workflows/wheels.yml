@@ -78,9 +78,9 @@ jobs:
         run: |
           Remove-Item -Recurse -Force "C:\Strawberry\"
           poetry install --no-interaction --no-root --only=build
-          Copy-Item -Path "C:/msys64/mingw64/bin/libgcc_s_seh-1.dll" -Destination ".\"
-          Copy-Item -Path "C:/msys64/mingw64/bin/libstdc++-6.dll" -Destination ".\"
-          Copy-Item -Path "C:/msys64/mingw64/bin/libwinpthread-1.dll" -Destination ".\"
+          Copy-Item -Path "C:\mingw64\bin\libgcc_s_seh-1.dll" -Destination ".\"
+          Copy-Item -Path "C:\mingw64\bin\libstdc++-6.dll" -Destination ".\"
+          Copy-Item -Path "C:\mingw64\bin\libwinpthread-1.dll" -Destination ".\"
           poetry run python -m cibuildwheel --output-dir .\wheelhouse
           Get-ChildItem -Path .\wheelhouse -Filter *.whl | Format-List
           Get-ChildItem -Path .\wheelhouse -Filter *.whl | ForEach-Object {
