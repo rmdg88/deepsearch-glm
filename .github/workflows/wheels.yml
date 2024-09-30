@@ -58,7 +58,14 @@ jobs:
           install: >
             mingw-w64-x86_64-toolchain
             mingw-w64-x86_64-gcc-libs
-            mingw-w64-x86_64-libwinpthread-git
+
+      - name: Set up external-libs [windows]
+        if: ${{matrix.os.platform_id == 'win_amd64'}}
+        shell: pwsh
+        run: |
+          Copy-Item -Path "C:/mingw64/bin/libgcc_s_seh-1.dll" -Destination ".\"
+          Copy-Item -Path "C:/mingw64/bin/libstdc++-6.dll" -Destination ".\"
+          Copy-Item -Path "C:/mingw64/bin/libwinpthread-1.dll" -Destination ".\"
 
       - name: Build wheels
         if: ${{matrix.os.platform_id == 'win_amd64'}}
