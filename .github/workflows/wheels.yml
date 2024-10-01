@@ -49,7 +49,6 @@ jobs:
           poetry config keyring.enabled false
           poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
 
-
       - name: Set up MSYS2
         if: ${{matrix.os.platform_id == 'win_amd64'}}
         uses: msys2/setup-msys2@v2
@@ -63,9 +62,9 @@ jobs:
         if: ${{matrix.os.platform_id == 'win_amd64'}}
         shell: pwsh
         run: |
-          Copy-Item -Path "C:/mingw64/bin/libgcc_s_seh-1.dll" -Destination ".\deepsearch-glm"
-          Copy-Item -Path "C:/mingw64/bin/libstdc++-6.dll" -Destination ".\deepsearch-glm"
-          Copy-Item -Path "C:/mingw64/bin/libwinpthread-1.dll" -Destination ".\deepsearch-glm"
+          Copy-Item -Path "C:/mingw64/bin/libgcc_s_seh-1.dll" -Destination ".\deepsearch_glm"
+          Copy-Item -Path "C:/mingw64/bin/libstdc++-6.dll" -Destination ".\deepsearch_glm"
+          Copy-Item -Path "C:/mingw64/bin/libwinpthread-1.dll" -Destination ".\deepsearch_glm"
 
       - name: Build wheels
         if: ${{matrix.os.platform_id == 'win_amd64'}}
@@ -76,9 +75,9 @@ jobs:
           CIBW_PROJECT_REQUIRES_PYTHON: "~=${{ matrix.python-version }}.0"
           PKG_CONFIG_PATH: "C:/msys64/usr/lib/pkgconfig"
           PKG_CONFIG_EXECUTABLE: "C:/mingw64/bin/pkg-config.exe"
-          CMAKE_PREFIX_PATH: "C:/msys64/mingw64"
-          CMAKE_LIBRARY_PATH: "C:/msys64/mingw64/lib"
-          CMAKE_INCLUDE_PATH: "C:/msys64/mingw64/include"
+          CMAKE_PREFIX_PATH: "C:/msys64/mingw64;C:/mingw64"
+          CMAKE_LIBRARY_PATH: "C:/msys64/mingw64/lib;C:/mingw64/lib"
+          CMAKE_INCLUDE_PATH: "C:/msys64/mingw64/include;C:/mingw64/include"
           CMAKE_GENERATOR: "MSYS Makefiles"
           BUILD_THREADS: 1
         shell: pwsh
