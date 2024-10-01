@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Module to load binary files of models and data"""
 
+
 import json
 import os
 import subprocess
@@ -84,7 +85,6 @@ def load_pretrained_nlp_models(force: bool = False, verbose: bool = False):
     """Function to load pretrained NLP models"""
 
     resources_dir = get_resources_dir()
-
     with open(f"{resources_dir}/models.json", "r", encoding="utf-8") as fr:
         models = json.load(fr)
 
@@ -92,9 +92,7 @@ def load_pretrained_nlp_models(force: bool = False, verbose: bool = False):
     cos_prfx = models["nlp"]["prefix"]
 
     cmds = {}
-
     for name, files in models["nlp"]["trained-models"].items():
-
         source = urljoin(cos_url, f"{cos_prfx}/{files[0]}")
         target = os.path.join(resources_dir, files[1])
 
@@ -109,6 +107,7 @@ def load_pretrained_nlp_models(force: bool = False, verbose: bool = False):
         if force or not os.path.exists(model_weights):
             if verbose:
                 print(f"Downloading {name} ... ", end="")
+
             subprocess.run(cmd, check=True) 
 
             if verbose:
