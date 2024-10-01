@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 """Module to load binary files of models and data"""
 
-
 import json
 import os
 import subprocess
-
+from urllib.parse import urljoin
 
 def get_resources_dir():
     """Function to obtain the resources-directory"""
@@ -91,39 +90,37 @@ def load_pretrained_nlp_models(force: bool = False, verbose: bool = False):
 
     cos_url = models["object-store"]
     cos_prfx = models["nlp"]["prefix"]
-    cos_path = os.path.join(cos_url, cos_prfx)
 
     cmds = {}
+
     for name, files in models["nlp"]["trained-models"].items():
-        source = os.path.join(cos_path, files[0])
+
+        source = urljoin(cos_url, f"{cos_prfx}/{files[0]}")
         target = os.path.join(resources_dir, files[1])
 
         cmd = ["curl", source, "-o", target, "-s"]
         cmds[name] = cmd
 
-    models = []
+    downloaded_models = []
 
     for name, cmd in cmds.items():
         model_weights = cmd[3]
 
-        if force or (not os.path.exists(model_weights)):
+        if force or not os.path.exists(model_weights):
             if verbose:
-                # print(f"downloading {os.path.basename(model_weights)} ... ", end="")
-                print(f"downloading {name} ... ", end="")
-
-            message = subprocess.run(cmd, check=True)
+                print(f"Downloading {name} ... ", end="")
+            subprocess.run(cmd, check=True) 
 
             if verbose:
                 print("done!")
-            models.append(name)
+            downloaded_models.append(name)
 
         elif os.path.exists(model_weights):
             if verbose:
-                # print(f" -> already downloaded {os.path.basename(cmd[3])}")
-                print(f" -> already downloaded {name}")
-            models.append(name)
+                print(f"Already downloaded {name}")
+            downloaded_models.append(name)
 
         else:
-            print(f" -> missing {name}")
+            print(f" -> Missing {name}")
 
-    return models
+    return downloaded_models
