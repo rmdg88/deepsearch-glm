@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 """Module to load binary files of models and data"""
 
+
 import json
 import os
 import subprocess
-import requests
 from urllib.parse import urljoin
 
 
@@ -36,46 +36,48 @@ def load_training_data(
     assert data_type in ["text", "crf", "fst"]
 
     resources_dir = get_resources_dir()
-
     with open(f"{resources_dir}/data.json", "r", encoding="utf-8") as fr:
         training_data = json.load(fr)
 
     cos_url = training_data["object-store"]
     cos_prfx = training_data["data"]["prefix"]
+    cos_path = os.path.join(cos_url, cos_prfx)
+
+    cmds = {}
+    for name, files in training_data["data"][data_type].items():
+        print(name)
+        if name == data_name:
+            source = os.path.join(cos_path, files[0])
+            target = os.path.join(resources_dir, files[1])
+
+            cmd = ["curl", source, "-o", target, "-s"]
+            cmds[name] = cmd
 
     done = True
     data = {}
 
-    for name, files in training_data["data"][data_type].items():
-        if name == data_name:
-            source_url = urljoin(cos_url, f"{cos_prfx}/{files[0]}")
-            target_path = os.path.join(resources_dir, files[1])
+    for name, cmd in cmds.items():
+        data_file = cmd[3]
+        print(data_file)
 
-            if force or not os.path.exists(target_path):
-                if verbose:
-                    print(f"Downloading {name} from {source_url}...")
+        if force or (not os.path.exists(data_file)):
+            if verbose:
+                print(f" -> downloading {name} ... ", end="")
 
-                try:
-                    response = requests.get(source_url, stream=True)
-                    response.raise_for_status()
+            subprocess.run(cmd, check=True)
 
-                    with open(target_path, "wb") as f:
-                        for chunk in response.iter_content(chunk_size=8192):
-                            if chunk:
-                                f.write(chunk)
+            if verbose:
+                print("done!")
 
-                    if verbose:
-                        print(f"Downloaded {name} to {target_path}")
+            data[name] = data_file
 
-                    data[name] = target_path
+        elif os.path.exists(data_file):
+            if verbose:
+                print(f" -> already downloaded {name}")
 
-                except requests.exceptions.RequestException as e:
-                    print(f"Failed to download {name}: {e}")
-                    done = False
-            else:
-                if verbose:
-                    print(f"Already downloaded {name}")
-                data[name] = target_path
+            data[name] = data_file
+        else:
+            print(f" -> missing {name}")
 
     return done, data
 
@@ -84,46 +86,41 @@ def load_pretrained_nlp_models(force: bool = False, verbose: bool = False):
     """Function to load pretrained NLP models"""
 
     resources_dir = get_resources_dir()
-
     with open(f"{resources_dir}/models.json", "r", encoding="utf-8") as fr:
         models = json.load(fr)
 
     cos_url = models["object-store"]
     cos_prfx = models["nlp"]["prefix"]
 
-    downloaded_models = []
+    cmds = {}
     for name, files in models["nlp"]["trained-models"].items():
-        source_url = urljoin(cos_url, f"{cos_prfx}/{files[0]}")
-        target_path = os.path.join(resources_dir, files[1])
+        source = urljoin(cos_url, f"{cos_prfx}/{files[0]}")
+        target = os.path.join(resources_dir, files[1])
 
-        if force or not os.path.exists(target_path):
+        cmd = ["curl", source, "-o", target, "-s"]
+        cmds[name] = cmd
+
+    downloaded_models = []
+
+    for name, cmd in cmds.items():
+        model_weights = cmd[3]
+
+        if force or not os.path.exists(model_weights):
             if verbose:
-                print(f"Downloading {name} from {source_url}...")
+                print(f"Downloading {name} ... ", end="")
 
-            try:
+            subprocess.run(cmd, check=True)
 
-                response = requests.get(source_url, stream=True)
-                response.raise_for_status()
+            if verbose:
+                print("done!")
+            downloaded_models.append(name)
 
-                with open(target_path, "wb") as f:
-                    for chunk in response.iter_content(chunk_size=8192):
-                        if chunk:
-                            f.write(chunk)
-
-                if verbose:
-                    print(f"Downloaded {name} to {target_path}")
-
-                downloaded_models.append(name)
-
-            except requests.exceptions.RequestException as e:
-                print(f"Failed to download {name}: {e}")
-
-        elif os.path.exists(target_path):
+        elif os.path.exists(model_weights):
             if verbose:
                 print(f"Already downloaded {name}")
             downloaded_models.append(name)
 
         else:
-            print(f"Missing {name}")
+            print(f" -> Missing {name}")
 
     return downloaded_models
